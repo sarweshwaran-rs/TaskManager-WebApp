@@ -284,7 +284,7 @@ public class SystemMonitorService {
                     if (name.contains("eth") || name.contains("eno1")) {
                         type = "Ethernet";
                     } else if (name.contains("wifi") || name.contains("wlan") || name.contains("Wi-fi")
-                            || name.contains("wireless")) {
+                            || name.contains("wireless") || name.contains("wlx002e2d0081b0")) {
                         type = "Wi-Fi";
                     } else if (name.contains("bluetooth")) {
                         type = "Bluetooth";
