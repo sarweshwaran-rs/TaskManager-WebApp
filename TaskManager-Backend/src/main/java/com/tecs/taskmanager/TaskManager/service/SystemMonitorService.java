@@ -1,26 +1,25 @@
 package com.tecs.taskmanager.TaskManager.service;
 
-import oshi.SystemInfo;
-import oshi.hardware.CentralProcessor;
-//import oshi.hardware.CentralProcessor.TickType;
-import oshi.hardware.GlobalMemory;
-import oshi.hardware.NetworkIF.IfOperStatus;
-import oshi.hardware.Sensors;
-import oshi.software.os.OperatingSystem;
-import org.springframework.stereotype.Service;
-import oshi.software.os.OSProcess;
-import oshi.hardware.HWDiskStore;
-import oshi.hardware.NetworkIF;
-import oshi.hardware.VirtualMemory;
-
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
+import oshi.SystemInfo;
+import oshi.hardware.CentralProcessor;
+import oshi.hardware.GlobalMemory;
 import oshi.hardware.GraphicsCard;
+import oshi.hardware.HWDiskStore;
+import oshi.hardware.NetworkIF;
+import oshi.hardware.NetworkIF.IfOperStatus;
+import oshi.hardware.Sensors;
+import oshi.hardware.VirtualMemory;
+import oshi.software.os.OSProcess;
+import oshi.software.os.OperatingSystem;
 
 @Service
 public class SystemMonitorService {
@@ -33,6 +32,9 @@ public class SystemMonitorService {
     private final Map<String, Long> prevBytesSent = new HashMap<>();
     private final Map<String, Long> prevBytesRecv = new HashMap<>();
     private final Map<String, Long> prevTimeStaps = new HashMap<>();
+    
+    // For calculating per-process CPU load between ticks
+    private Map<Integer, OSProcess> priorSnapshot = new HashMap<>();
 
     public Map<String, Object> getCpuInfo() {
         Map<String, Object> data = new HashMap<>();
@@ -134,16 +136,32 @@ public class SystemMonitorService {
     }
 
     public List<Map<String, Object>> getProcesses(int limit) {
-        List<OSProcess> processes = systeminfo.getOperatingSystem().getProcesses();
-        processes.sort(Comparator.comparingDouble(OSProcess::getProcessCpuLoadCumulative).reversed());
-        return processes.stream().limit(limit).map(p -> {
-            Map<String, Object> proc = new HashMap<>();
-            proc.put("pid", p.getProcessID());
-            proc.put("name", p.getName());
-            proc.put("cpuLoad", 100d * p.getProcessCpuLoadCumulative());
-            proc.put("memory", p.getResidentSetSize());
-            return proc;
-        }).collect(Collectors.toList());
+        List<OSProcess> processes = os.getProcesses();
+        Map<Integer, OSProcess> currentSnapshot = new HashMap<>();
+
+        List<Map<String, Object>> processList = new ArrayList<>();
+        for (OSProcess p : processes) {
+            currentSnapshot.put(p.getProcessID(), p);
+            OSProcess priorProc = priorSnapshot.get(p.getProcessID());
+
+            // getProcessCpuLoadBetweenTicks provides a value between 0.0 and 1.0
+            double cpuLoad = p.getProcessCpuLoadBetweenTicks(priorProc) * 100.0;
+
+            Map<String, Object> procData = new HashMap<>();
+            procData.put("pid", p.getProcessID());
+            procData.put("name", p.getName());
+            procData.put("cpuLoad", cpuLoad);
+            procData.put("memory", p.getResidentSetSize());
+            processList.add(procData);
+        }
+        // Update snapshot for the next call
+        priorSnapshot = currentSnapshot;
+
+        // Sort the list by the calculated real-time CPU load in descending order
+        processList.sort((p1, p2) -> Double.compare((double) p2.get("cpuLoad"), (double) p1.get("cpuLoad")));
+
+        // Return the top 'limit' processes
+        return processList.stream().limit(limit).collect(Collectors.toList());
     }
 
     public List<Map<String, Object>> getGpuInfo() {
