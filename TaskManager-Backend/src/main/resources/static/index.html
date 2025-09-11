@@ -38,7 +38,7 @@
             
             // Subscribe to the metrics topic
             client.subscribe("/api/metrics", (message) => {
-                console.log("Received data:", message.body);
+                //console.log("Received data:", message.body);
                 const data = JSON.parse(message.body);
                 document.getElementById("metrics").textContent = JSON.stringify(data, null, 2);
             });
