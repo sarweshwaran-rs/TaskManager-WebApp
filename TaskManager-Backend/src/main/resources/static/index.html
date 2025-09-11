@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Task Manager - Live Metrics</title>
+    <!-- SockJS is a more robust WebSocket library often used with Spring -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 40px; background-color: #f0f2f5; }
+        #metrics {
+            white-space: pre;
+            font-family: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", monospace;
+            background-color: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow-x: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { color: #1f2937; }
+    </style>
+</head>
+<body>
+
+    <h1>Live System Metrics</h1>
+    <pre id="metrics">Connecting to server...</pre>
+
+    <script>
+        // Use native websockets
+        const client = Stomp.client("ws://localhost:8080/ws");
+
+        const onConnect = () => {
+            console.log("STOMP connection established!");
+            document.getElementById("metrics").textContent = "Subscribed to metrics feed. Waiting for data...";
+            
+            // Subscribe to the metrics topic
+            client.subscribe("/api/metrics", (message) => {
+                console.log("Received data:", message.body);
+                const data = JSON.parse(message.body);
+                document.getElementById("metrics").textContent = JSON.stringify(data, null, 2);
+            });
+        };
+
+        const onError = (error) => {
+            console.error("STOMP Error: ", error);
+            document.getElementById("metrics").textContent = "Could not connect to the WebSocket server. Please ensure the backend is running and refresh the page.";
+        };
+
+        // Connect using STOMP
+        client.connect({}, onConnect, onError);
+    </script>
+
+</body>
+</html>
