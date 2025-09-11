@@ -1,0 +1,170 @@
+:root {
+    --bg-color: #f0f2f5;
+    --card-bg-color: #ffffff;
+    --text-color: #1f2937;
+    --text-secondary-color: #6b7280;
+    --border-color: #d1d5db;
+    --primary-color: #3b82f6;
+    --progress-bar-bg: #e5e7eb;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --border-radius: 8px;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+header {
+    background-color: var(--card-bg-color);
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--text-secondary-color);
+}
+
+.connection-status .dot {
+    height: 10px;
+    width: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+    background-color: #f59e0b; /* Yellow for connecting */
+    transition: background-color 0.3s;
+}
+
+.connection-status.connected .dot {
+    background-color: #22c55e; /* Green for connected */
+}
+
+.connection-status.error .dot {
+    background-color: #ef4444; /* Red for error */
+}
+
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+.card {
+    background-color: var(--card-bg-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+}
+
+.card h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.75rem;
+    font-size: 1.25rem;
+}
+
+/* CPU Card */
+.cpu-card { grid-column: 1 / -1; }
+#cpu-name { font-weight: 600; margin-bottom: 1rem; }
+.cpu-main-stats { display: flex; justify-content: space-around; text-align: center; margin-bottom: 1.5rem; }
+.cpu-main-stats .stat label { font-size: 0.9rem; color: var(--text-secondary-color); }
+.cpu-main-stats .stat div, .cpu-main-stats .stat span { font-size: 1.5rem; font-weight: 500; }
+.cpu-cores h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+.core-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 1rem;
+}
+.core-load { text-align: center; }
+.core-load .progress-bar-container { margin: 0.25rem auto; }
+.core-load span { font-size: 0.8rem; color: var(--text-secondary-color); }
+
+/* Memory Card */
+.memory-card { grid-row: span 1; }
+.memory-stat { margin-bottom: 1rem; }
+.memory-stat label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.memory-stat span { font-size: 0.9rem; color: var(--text-secondary-color); }
+
+/* Processes Card */
+.processes-card { grid-column: 1 / -1; }
+#processes-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+#processes-table th, #processes-table td {
+    text-align: left;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+#processes-table th {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-secondary-color);
+}
+#processes-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Disk/Network/GPU Info Containers */
+.info-item {
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
+}
+.info-item:last-child { margin-bottom: 0; }
+.info-item h3 { margin-top: 0; font-size: 1rem; }
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+.info-grid > div > strong { color: var(--text-secondary-color); }
+
+/* Progress Bars */
+.progress-bar-container {
+    width: 100%;
+    background-color: var(--progress-bar-bg);
+    border-radius: 10px;
+    height: 1rem;
+    overflow: hidden;
+}
+.progress-bar {
+    height: 100%;
+    background-color: var(--primary-color);
+    border-radius: 10px;
+    transition: width 0.5s ease-in-out;
+    text-align: center;
+    color: white;
+    font-size: 0.8rem;
+    line-height: 1rem;
+}
+
+/* Utility */
+.small-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary-color);
+}
+
