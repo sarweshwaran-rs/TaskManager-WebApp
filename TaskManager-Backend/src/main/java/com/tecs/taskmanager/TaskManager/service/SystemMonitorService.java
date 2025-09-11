@@ -281,7 +281,7 @@ public class SystemMonitorService {
 
                     String type = "Unknown";
                     String name = network.getName().toLowerCase();
-                    if (name.contains("eth")) {
+                    if (name.contains("eth") || name.contains("enol")) {
                         type = "Ethernet";
                     } else if (name.contains("wifi") || name.contains("wlan") || name.contains("Wi-fi")
                             || name.contains("wireless")) {
