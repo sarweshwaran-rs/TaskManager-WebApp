@@ -1,104 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Manager Dashboard</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-</head>
-<body>
-    <header>
-        <h1>System Monitor Dashboard</h1>
-        <div class="connection-status" id="connection-status">
-            <span class="dot"></span>
-            <span id="status-text">Connecting...</span>
-        </div>
-    </header>
-
-    <main class="dashboard">
-        <!-- CPU Section -->
-        <div class="card cpu-card">
-            <h2>CPU</h2>
-            <div id="cpu-name"></div>
-            <div class="cpu-main-stats">
-                <div class="stat">
-                    <label>System Load</label>
-                    <div class="progress-bar-container">
-                        <div id="cpu-load-bar" class="progress-bar"></div>
-                    </div>
-                    <span id="cpu-load-text"></span>
-                </div>
-                <div class="stat">
-                    <label>Temperature</label>
-                    <div id="cpu-temp">N/A</div>
-                </div>
-                 <div class="stat">
-                    <label>Frequency</label>
-                    <div id="cpu-freq">N/A</div>
-                </div>
-            </div>
-            <div class="cpu-cores">
-                <h3>Logical Cores</h3>
-                <div id="cpu-core-loads" class="core-grid"></div>
-            </div>
-        </div>
-
-        <!-- Memory Section -->
-        <div class="card memory-card">
-            <h2>Memory</h2>
-            <div class="memory-stat">
-                <label>Physical Memory</label>
-                <div class="progress-bar-container">
-                    <div id="mem-used-bar" class="progress-bar"></div>
-                </div>
-                <span id="mem-used-text"></span>
-            </div>
-            <div class="memory-stat">
-                <label>Swap</label>
-                <div class="progress-bar-container">
-                    <div id="swap-used-bar" class="progress-bar"></div>
-                </div>
-                <span id="swap-used-text"></span>
-            </div>
-        </div>
-
-        <!-- Processes Section -->
-        <div class="card processes-card">
-            <h2>Top Processes</h2>
-            <table id="processes-table">
-                <thead>
-                    <tr>
-                        <th>PID</th>
-                        <th>Name</th>
-                        <th>CPU %</th>
-                        <th>Memory</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Process rows will be injected here -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- OS & System Info -->
-        <div class="card os-card">
-            <h2>System Information</h2>
-            <div id="os-info"></div>
-            <div id="system-uptime"></div>
-        </div>
-
-        <!-- Disks Section -->
-        <div class="card disks-card" id="disk-info-container"><h2>Disks</h2></div>
-
-        <!-- Network Section -->
-        <div class="card network-card" id="network-info-container"><h2>Network</h2></div>
-
-        <!-- GPU Section -->
-        <div class="card gpu-card" id="gpu-info-container"><h2>Graphics</h2></div>
-    </main>
-
-    <script src="app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>System Monitor Dashboard</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/main.jsx"></script>
+  </body>
 </html>
-
