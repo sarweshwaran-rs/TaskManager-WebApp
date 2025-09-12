@@ -21,7 +21,7 @@ public class MetricWebSocketController {
         this.messagingTemplate = messagingTemplate;
     }
 
-    @Scheduled(fixedRate = 2000)
+    @Scheduled(fixedRate = 1000)
     public void getMetrics() {
         Map<String, Object> data = new HashMap<>();
         data.put("cpu", service.getCpuInfo());
