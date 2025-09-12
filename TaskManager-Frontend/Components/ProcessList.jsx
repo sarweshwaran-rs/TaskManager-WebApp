@@ -17,6 +17,7 @@ const ProcessList = ({ processes }) => {
   });
 
   const sortedProcesses = useMemo(() => {
+    if (!processes) return [];
     let sortableItems = [...processes];
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
@@ -48,11 +49,11 @@ const ProcessList = ({ processes }) => {
   };
 
   return (
-    <div className="bg-brand-card rounded-lg shadow-lg p-6">
+    <div className="bg-brand-card rounded-lg shadow-lg p-6 h-full flex flex-col">
       <h2 className="text-xl font-bold text-brand-text border-b border-gray-700 pb-3 mb-4">
         Top Processes
       </h2>
-      <div className="overflow-x-auto max-h-96">
+      <div className="flex-grow overflow-auto">
         <table className="w-full text-sm text-left text-brand-text-secondary">
           <thead className="text-xs text-brand-text uppercase bg-gray-700/50 sticky top-0">
             <tr>

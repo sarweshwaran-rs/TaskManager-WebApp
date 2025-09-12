@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { Client } from "@stomp/stompjs";
-import Header from "./components/Header.jsx";
-import CpuCard from "./components/CpuCard.jsx";
-import MemoryCard from "./components/MemoryCard.jsx";
-import ProcessList from "./components/ProcessList.jsx";
-import OsCard from "./components/OsCard.jsx";
-import DiskCard from "./components/DiskCard.jsx";
-import NetworkCard from "./components/NetworkCard.jsx";
-import GpuCard from "./components/GpuCard.jsx";
+import Header from "./Components/Header.jsx";
+import CpuCard from "./Components/CpuCard.jsx";
+import MemoryCard from "./Components/MemoryCard.jsx";
+import ProcessList from "./Components/ProcessList.jsx";
+import OsCard from "./Components/OsCard.jsx";
+import DiskCard from "./Components/DiskCard.jsx";
+import NetworkCard from "./Components/NetworkCard.jsx";
+import GpuCard from "./Components/GpuCard.jsx";
+import Sidebar from "./Components/Sidebar.jsx";
+import Performance from "./Components/Performance.jsx";
 
 const WEBSOCKET_URL = "ws://localhost:8080/ws";
+
+const PlaceholderView = ({ title }) => (
+  <div className="bg-brand-card rounded-lg shadow-lg text-center p-6">
+    <h2 className="text-xl font-bold mb-4 text-brand-text">{title}</h2>
+    <p className="text-brand-text-secondary">This feature is not yet implemented.</p>
+  </div>
+);
 
 function App() {
   const [latestMetrics, setLatestMetrics] = useState(null);
@@ -18,6 +27,7 @@ function App() {
     memory: [],
   });
   const [connectionStatus, setConnectionStatus] = useState("Connecting...");
+  const [activeView, setActiveView] = useState("performance");
 
   useEffect(() => {
     const MAX_HISTORY_LENGTH = 30; // Keep last 30 data points
@@ -32,14 +42,18 @@ function App() {
           setLatestMetrics(data);
 
           setHistory((prevHistory) => {
+            const cpuLoad = parseFloat(data.cpu?.systemLoad || 0);
             const newCpuHistory = [
               ...prevHistory.cpu,
-              parseFloat(data.cpu.systemLoad),
+              cpuLoad,
             ].slice(-MAX_HISTORY_LENGTH);
 
+            const totalMem = parseFloat(data.memory?.total);
+            const usedMem = parseFloat(data.memory?.used);
+            const memPercent = totalMem > 0 ? (usedMem / totalMem) * 100 : 0;
             const newMemoryHistory = [
               ...prevHistory.memory,
-              (data.memory.usedGB / data.memory.totalGB) * 100,
+              memPercent,
             ].slice(-MAX_HISTORY_LENGTH);
 
             return {
@@ -65,63 +79,42 @@ function App() {
     };
   }, []);
 
+  const renderActiveView = () => {
+    if (!latestMetrics) {
+      return (
+        <div className="p-6 m-6 bg-brand-card rounded-lg shadow-lg text-center">
+          <p className="text-brand-text-secondary">{connectionStatus} to server and waiting for data...</p>
+        </div>
+      );
+    }
+    switch (activeView) {
+      case "processes":
+        return <ProcessList processes={latestMetrics.processes} />;
+      case "performance":
+        return <Performance metrics={latestMetrics} history={history} />;
+      case "app-history":
+        return <PlaceholderView title="App history" />;
+      case "startup":
+        return <PlaceholderView title="Startup apps" />;
+      case "users":
+        return <PlaceholderView title="Users" />;
+      case "details":
+        return <PlaceholderView title="Details" />;
+      case "services":
+        return <PlaceholderView title="Services" />;
+      default:
+        return <Performance metrics={latestMetrics} history={history} />;
+    }
+  };
+
   return (
-    <div className="bg-brand-dark text-brand-text min-h-screen font-sans">
+    <div className="bg-brand-dark text-brand-text h-screen font-sans flex flex-col">
       <Header status={connectionStatus} />
-      <main>
-        {latestMetrics ? (
-          <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Main stats cards with charts */}
-            <div className="lg:col-span-8">
-              {latestMetrics.cpu && (
-                <CpuCard cpu={latestMetrics.cpu} history={history.cpu} />
-              )}
-            </div>
-            <div className="lg:col-span-4">
-              {latestMetrics.memory && (
-                <MemoryCard
-                  memory={latestMetrics.memory}
-                  history={history.memory}
-                />
-              )}
-            </div>
-
-            {/* Full-width process list */}
-            <div className="lg:col-span-12">
-              {latestMetrics.processes && (
-                <ProcessList processes={latestMetrics.processes} />
-              )}
-            </div>
-
-            {/* Other info cards */}
-            <div className="lg:col-span-4">
-              {latestMetrics.os && latestMetrics.cpu && (
-                <OsCard
-                  os={latestMetrics.os}
-                  uptime={latestMetrics.cpu.Uptime}
-                />
-              )}
-            </div>
-            <div className="lg:col-span-4">
-              {latestMetrics.disk && <DiskCard disks={latestMetrics.disk} />}
-            </div>
-            <div className="lg:col-span-4">
-              {latestMetrics.network && (
-                <NetworkCard networks={latestMetrics.network} />
-              )}
-            </div>
-            <div className="lg:col-span-4">
-              {latestMetrics.gpu && <GpuCard gpus={latestMetrics.gpu} />}
-            </div>
-          </div>
-        ) : (
-          <div className="p-6 m-6 bg-brand-card rounded-lg shadow-lg text-center">
-            Connecting to server and waiting for data...
-          </div>
-        )}
-      </main>
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar activeView={activeView} setActiveView={setActiveView} />
+        <main className="flex-1 overflow-y-auto p-6">{renderActiveView()}</main>
+      </div>
     </div>
   );
 }
-
 export default App;

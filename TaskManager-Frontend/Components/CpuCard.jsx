@@ -54,7 +54,7 @@ const CpuCard = ({ cpu, history }) => {
   };
 
   return (
-    <div className="bg-brand-card rounded-lg shadow-lg p-6 h-full flex flex-col">
+    <div className="bg-brand-card rounded-lg shadow-lg p-6 flex flex-col">
       <h2 className="text-xl font-bold text-brand-text border-b border-gray-700 pb-3 mb-4">
         CPU
       </h2>

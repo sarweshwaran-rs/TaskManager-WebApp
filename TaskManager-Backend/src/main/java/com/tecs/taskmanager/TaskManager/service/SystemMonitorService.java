@@ -81,9 +81,8 @@ public class SystemMonitorService {
         data.put("Processor Family", processor.getProcessorIdentifier().getFamily());
         data.put("Processor Model", processor.getProcessorIdentifier().getModel());
         data.put("Processor Stepping", processor.getProcessorIdentifier().getStepping());
-        data.put("Processor ID", processor.getProcessorIdentifier().getProcessorID());
-        data.put("Processor Microtecture", processor.getProcessorIdentifier().getMicroarchitecture());
-        data.put("Processor Identifier", processor.getProcessorIdentifier().getProcessorID());
+        data.put("processorId", processor.getProcessorIdentifier().getProcessorID());
+        data.put("microarchitecture", processor.getProcessorIdentifier().getMicroarchitecture());
         data.put("Vendor Frequency", processor.getProcessorIdentifier().getVendorFreq());
 
         long uptimeSeconds = os.getSystemUptime();
@@ -101,27 +100,21 @@ public class SystemMonitorService {
         GlobalMemory memory = systeminfo.getHardware().getMemory();
         VirtualMemory virtualMemory = memory.getVirtualMemory();
         Map<String, Object> data = new HashMap<>();
-        long totalGB = memory.getTotal() / (1024 * 1024 * 1024);
-        long availableGB = memory.getAvailable() / (1024 * 1024 * 1024);
-        long usedMemory = totalGB - availableGB;
+        
+        // Send values in GB as numbers for better frontend flexibility
+        double totalGB = memory.getTotal() / (1024.0 * 1024.0 * 1024.0);
+        double availableGB = memory.getAvailable() / (1024.0 * 1024.0 * 1024.0);
+        double usedGB = totalGB - availableGB;
 
-        long maxVirtualMemory = virtualMemory.getVirtualMax() / (1024 * 1024 * 1024);
-        long usedVirtualMemory = virtualMemory.getVirtualInUse() / (1024 * 1024 * 1024);
-        long availableVirtualMemory = maxVirtualMemory - usedVirtualMemory;
+        double swapTotalGB = virtualMemory.getSwapTotal() / (1024.0 * 1024.0 * 1024.0);
+        double swapUsedGB = virtualMemory.getSwapUsed() / (1024.0 * 1024.0 * 1024.0);
 
-        long swapTotalGB = virtualMemory.getSwapTotal() / (1024 * 1024 * 1024);
-        long swapUsedGB = virtualMemory.getSwapUsed() / (1024 * 1024 * 1024);
+        data.put("totalGB", totalGB);
+        data.put("availableGB", availableGB);
+        data.put("usedGB", usedGB);
 
-        data.put("total", totalGB + " GB");
-        data.put("available", availableGB + " GB");
-        data.put("used", usedMemory + " GB");
-
-        data.put("maxVirtualMemory", maxVirtualMemory + " GB");
-        data.put("availableVirtualMemory", availableVirtualMemory + " GB");
-        data.put("usedVirtualMemory", usedVirtualMemory + " GB");
-
-        data.put("swapTotal", swapTotalGB + " GB");
-        data.put("swapUsed", swapUsedGB + " GB");
+        data.put("swapTotalGB", swapTotalGB);
+        data.put("swapUsedGB", swapUsedGB);
 
         data.put("Physical Memory", memory.getPhysicalMemory());
         return data;
@@ -169,11 +162,12 @@ public class SystemMonitorService {
 
         return gpus.stream().map(gpu -> {
             Map<String, Object> data = new HashMap<>();
-            data.put("Device Id", gpu.getDeviceId());
-            data.put("Device name", gpu.getName());
+            data.put("deviceId", gpu.getDeviceId());
+            data.put("name", gpu.getName());
             data.put("vendor", gpu.getVendor());
-            data.put("memory", (gpu.getVRam() / (1024 * 1024 * 1024) + " GB"));
-            data.put("version Info", gpu.getVersionInfo());
+            double vramGB = gpu.getVRam() / (1024.0 * 1024.0 * 1024.0);
+            data.put("vram", String.format("%.1f GB", vramGB));
+            data.put("versionInfo", gpu.getVersionInfo());
             return data;
         }).collect(Collectors.toList());
     }
@@ -189,11 +183,10 @@ public class SystemMonitorService {
         return disks.stream().map(disk -> {
             disk.updateAttributes(); // refresh I/O stats
             Map<String, Object> data = new HashMap<>();
-            data.put("Name", disk.getName());
-            data.put("Model", disk.getModel());
-            data.put("Disk Serial Number:", disk.getSerial());
-            data.put("Disk Size", (disk.getSize() / (1024 * 1024 * 1024)) + " GB");
-            data.put("Disk Type", disk.getClass());
+            data.put("name", disk.getName());
+            data.put("model", disk.getModel());
+            data.put("serial", disk.getSerial());
+            data.put("size", String.format("%.1f GB", disk.getSize() / (1024.0 * 1024.0 * 1024.0)));
 
             // Partition info
             data.put("Partitions", disk.getPartitions().stream().map(partition -> {
@@ -242,8 +235,8 @@ public class SystemMonitorService {
                 writeSpeed = String.format("%.2f kB/s", writeSpeedKBs);
             }
             // Format as KB/s
-            data.put("Read Speed", readSpeed);
-            data.put("Write Speed", writeSpeed);
+            data.put("readSpeed", readSpeed);
+            data.put("writeSpeed", writeSpeed);
 
             return data;
         }).collect(Collectors.toList());
@@ -284,18 +277,18 @@ public class SystemMonitorService {
                     prevBytesRecv.put(ifName, bytesReceived);
                     prevTimeStaps.put(ifName, now);
 
-                    data.put("Name", network.getName());
-                    data.put("Display Name", network.getDisplayName());
-                    data.put("MAC Address", network.getMacaddr());
-                    data.put("MTU (bytes)", network.getMTU());
-                    data.put("Interface Speed", (network.getSpeed() / 1_000_000) + " mb/s");
-                    data.put("Total Bytes Sent", network.getBytesSent());
-                    data.put("Total Bytes Received", network.getBytesRecv());
-                    data.put("IP V4 Address", Arrays.toString(network.getIPv4addr()).replace("[", "").replace("]", ""));
-                    data.put("IP V6 Address", getPrimaryIpv6Address(network.getIPv6addr()));
-                    data.put("Subnet Mask", formatSubnetMasks(network.getSubnetMasks()));
-                    data.put("Upload Speed", String.format("%.2f mb/s", sentMbps));
-                    data.put("Download Speed", String.format("%.2f mb/s", recvMbps));
+                    data.put("name", network.getName());
+                    data.put("displayName", network.getDisplayName());
+                    data.put("macAddress", network.getMacaddr());
+                    data.put("mtu", network.getMTU());
+                    data.put("speed", (network.getSpeed() / 1_000_000) + " mb/s");
+                    data.put("totalBytesSent", network.getBytesSent());
+                    data.put("totalBytesReceived", network.getBytesRecv());
+                    data.put("ipv4", Arrays.toString(network.getIPv4addr()).replace("[", "").replace("]", ""));
+                    data.put("ipv6", getPrimaryIpv6Address(network.getIPv6addr()));
+                    data.put("subnetMask", formatSubnetMasks(network.getSubnetMasks()));
+                    data.put("uploadSpeed", String.format("%.2f mb/s", sentMbps));
+                    data.put("downloadSpeed", String.format("%.2f mb/s", recvMbps));
 
                     String type = "Unknown";
                     String name = network.getName().toLowerCase();
@@ -308,7 +301,7 @@ public class SystemMonitorService {
                         type = "Bluetooth";
                     }
 
-                    data.put("Type", type);
+                    data.put("connectionType", type);
                     return data;
                 }).collect(Collectors.toList());
     }
