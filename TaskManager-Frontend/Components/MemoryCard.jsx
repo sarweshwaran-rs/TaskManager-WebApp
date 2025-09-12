@@ -49,12 +49,12 @@ const chartOptions = {
 };
 
 const MemoryCard = ({ memory, history }) => {
-  const total = memory.totalGB;
-  const used = memory.usedGB;
+  const total = parseFloat(memory.totalGB) || 0;
+  const used = parseFloat(memory.usedGB) || 0;
   const memPercent = total > 0 ? (used / total) * 100 : 0;
 
-  const swapTotal = memory.swapTotalGB;
-  const swapUsed = memory.swapUsedGB;
+  const swapTotal = parseFloat(memory.swapTotalGB) || 0;
+  const swapUsed = parseFloat(memory.swapUsedGB) || 0;
   const swapPercent = swapTotal > 0 ? (swapUsed / swapTotal) * 100 : 0;
   const physicalMemory = memory["Physical Memory"] || [];
 
