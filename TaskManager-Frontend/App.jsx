@@ -32,20 +32,25 @@ function App() {
           setLatestMetrics(data);
 
           setHistory((prevHistory) => {
-            const newCpuHistory = [
-              ...prevHistory.cpu,
-              parseFloat(data.cpu.systemLoad),
-            ].slice(-MAX_HISTORY_LENGTH);
+            const newHistory = { ...prevHistory };
 
-            const newMemoryHistory = [
-              ...prevHistory.memory,
-              (data.memory.usedGB / data.memory.totalGB) * 100,
-            ].slice(-MAX_HISTORY_LENGTH);
+            if (data.cpu && data.cpu.systemLoad) {
+              newHistory.cpu = [
+                ...prevHistory.cpu,
+                parseFloat(data.cpu.systemLoad),
+              ].slice(-MAX_HISTORY_LENGTH);
+            }
 
-            return {
-              cpu: newCpuHistory,
-              memory: newMemoryHistory,
-            };
+            if (data.memory && data.memory.usedGB && data.memory.totalGB) {
+              const used = parseFloat(data.memory.usedGB);
+              const total = parseFloat(data.memory.totalGB);
+              newHistory.memory = [
+                ...prevHistory.memory,
+                total > 0 ? (used / total) * 100 : 0,
+              ].slice(-MAX_HISTORY_LENGTH);
+            }
+
+            return newHistory;
           });
         });
       },
