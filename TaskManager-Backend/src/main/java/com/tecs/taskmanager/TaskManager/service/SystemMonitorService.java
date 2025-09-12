@@ -1,26 +1,25 @@
 package com.tecs.taskmanager.TaskManager.service;
 
-import oshi.SystemInfo;
-import oshi.hardware.CentralProcessor;
-//import oshi.hardware.CentralProcessor.TickType;
-import oshi.hardware.GlobalMemory;
-import oshi.hardware.NetworkIF.IfOperStatus;
-import oshi.hardware.Sensors;
-import oshi.software.os.OperatingSystem;
-import org.springframework.stereotype.Service;
-import oshi.software.os.OSProcess;
-import oshi.hardware.HWDiskStore;
-import oshi.hardware.NetworkIF;
-import oshi.hardware.VirtualMemory;
-
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
+import oshi.SystemInfo;
+import oshi.hardware.CentralProcessor;
+import oshi.hardware.GlobalMemory;
 import oshi.hardware.GraphicsCard;
+import oshi.hardware.HWDiskStore;
+import oshi.hardware.NetworkIF;
+import oshi.hardware.NetworkIF.IfOperStatus;
+import oshi.hardware.Sensors;
+import oshi.hardware.VirtualMemory;
+import oshi.software.os.OSProcess;
+import oshi.software.os.OperatingSystem;
 
 @Service
 public class SystemMonitorService {
@@ -33,6 +32,9 @@ public class SystemMonitorService {
     private final Map<String, Long> prevBytesSent = new HashMap<>();
     private final Map<String, Long> prevBytesRecv = new HashMap<>();
     private final Map<String, Long> prevTimeStaps = new HashMap<>();
+    
+    // For calculating per-process CPU load between ticks
+    private Map<Integer, OSProcess> priorSnapshot = new HashMap<>();
 
     public Map<String, Object> getCpuInfo() {
         Map<String, Object> data = new HashMap<>();
@@ -79,9 +81,8 @@ public class SystemMonitorService {
         data.put("Processor Family", processor.getProcessorIdentifier().getFamily());
         data.put("Processor Model", processor.getProcessorIdentifier().getModel());
         data.put("Processor Stepping", processor.getProcessorIdentifier().getStepping());
-        data.put("Processor ID", processor.getProcessorIdentifier().getProcessorID());
-        data.put("Processor Microtecture", processor.getProcessorIdentifier().getMicroarchitecture());
-        data.put("Processor Identifier", processor.getProcessorIdentifier().getProcessorID());
+        data.put("processorId", processor.getProcessorIdentifier().getProcessorID());
+        data.put("microarchitecture", processor.getProcessorIdentifier().getMicroarchitecture());
         data.put("Vendor Frequency", processor.getProcessorIdentifier().getVendorFreq());
 
         long uptimeSeconds = os.getSystemUptime();
@@ -99,27 +100,21 @@ public class SystemMonitorService {
         GlobalMemory memory = systeminfo.getHardware().getMemory();
         VirtualMemory virtualMemory = memory.getVirtualMemory();
         Map<String, Object> data = new HashMap<>();
-        long totalGB = memory.getTotal() / (1024 * 1024 * 1024);
-        long availableGB = memory.getAvailable() / (1024 * 1024 * 1024);
-        long usedMemory = totalGB - availableGB;
+        
+        // Send values in GB as numbers for better frontend flexibility
+        double totalGB = memory.getTotal() / (1024.0 * 1024.0 * 1024.0);
+        double availableGB = memory.getAvailable() / (1024.0 * 1024.0 * 1024.0);
+        double usedGB = totalGB - availableGB;
 
-        long maxVirtualMemory = virtualMemory.getVirtualMax() / (1024 * 1024 * 1024);
-        long usedVirtualMemory = virtualMemory.getVirtualInUse() / (1024 * 1024 * 1024);
-        long availableVirtualMemory = maxVirtualMemory - usedVirtualMemory;
+        double swapTotalGB = virtualMemory.getSwapTotal() / (1024.0 * 1024.0 * 1024.0);
+        double swapUsedGB = virtualMemory.getSwapUsed() / (1024.0 * 1024.0 * 1024.0);
 
-        long swapTotalGB = virtualMemory.getSwapTotal() / (1024 * 1024 * 1024);
-        long swapUsedGB = virtualMemory.getSwapUsed() / (1024 * 1024 * 1024);
+        data.put("totalGB", totalGB);
+        data.put("availableGB", availableGB);
+        data.put("usedGB", usedGB);
 
-        data.put("total", totalGB + " GB");
-        data.put("available", availableGB + " GB");
-        data.put("used", usedMemory + " GB");
-
-        data.put("maxVirtualMemory", maxVirtualMemory + " GB");
-        data.put("availableVirtualMemory", availableVirtualMemory + " GB");
-        data.put("usedVirtualMemory", usedVirtualMemory + " GB");
-
-        data.put("swapTotal", swapTotalGB + " GB");
-        data.put("swapUsed", swapUsedGB + " GB");
+        data.put("swapTotalGB", swapTotalGB);
+        data.put("swapUsedGB", swapUsedGB);
 
         data.put("Physical Memory", memory.getPhysicalMemory());
         return data;
@@ -134,16 +129,32 @@ public class SystemMonitorService {
     }
 
     public List<Map<String, Object>> getProcesses(int limit) {
-        List<OSProcess> processes = systeminfo.getOperatingSystem().getProcesses();
-        processes.sort(Comparator.comparingDouble(OSProcess::getProcessCpuLoadCumulative).reversed());
-        return processes.stream().limit(limit).map(p -> {
-            Map<String, Object> proc = new HashMap<>();
-            proc.put("pid", p.getProcessID());
-            proc.put("name", p.getName());
-            proc.put("cpuLoad", 100d * p.getProcessCpuLoadCumulative());
-            proc.put("memory", p.getResidentSetSize());
-            return proc;
-        }).collect(Collectors.toList());
+        List<OSProcess> processes = os.getProcesses();
+        Map<Integer, OSProcess> currentSnapshot = new HashMap<>();
+
+        List<Map<String, Object>> processList = new ArrayList<>();
+        for (OSProcess p : processes) {
+            currentSnapshot.put(p.getProcessID(), p);
+            OSProcess priorProc = priorSnapshot.get(p.getProcessID());
+
+            // getProcessCpuLoadBetweenTicks provides a value between 0.0 and 1.0
+            double cpuLoad = p.getProcessCpuLoadBetweenTicks(priorProc) * 100.0;
+
+            Map<String, Object> procData = new HashMap<>();
+            procData.put("pid", p.getProcessID());
+            procData.put("name", p.getName());
+            procData.put("cpuLoad", cpuLoad);
+            procData.put("memory", p.getResidentSetSize());
+            processList.add(procData);
+        }
+        // Update snapshot for the next call
+        priorSnapshot = currentSnapshot;
+
+        // Sort the list by the calculated real-time CPU load in descending order
+        processList.sort((p1, p2) -> Double.compare((double) p2.get("cpuLoad"), (double) p1.get("cpuLoad")));
+
+        // Return the top 'limit' processes
+        return processList.stream().limit(limit).collect(Collectors.toList());
     }
 
     public List<Map<String, Object>> getGpuInfo() {
@@ -151,11 +162,12 @@ public class SystemMonitorService {
 
         return gpus.stream().map(gpu -> {
             Map<String, Object> data = new HashMap<>();
-            data.put("Device Id", gpu.getDeviceId());
-            data.put("Device name", gpu.getName());
+            data.put("deviceId", gpu.getDeviceId());
+            data.put("name", gpu.getName());
             data.put("vendor", gpu.getVendor());
-            data.put("memory", (gpu.getVRam() / (1024 * 1024 * 1024) + " GB"));
-            data.put("version Info", gpu.getVersionInfo());
+            double vramGB = gpu.getVRam() / (1024.0 * 1024.0 * 1024.0);
+            data.put("vram", String.format("%.1f GB", vramGB));
+            data.put("versionInfo", gpu.getVersionInfo());
             return data;
         }).collect(Collectors.toList());
     }
@@ -171,11 +183,10 @@ public class SystemMonitorService {
         return disks.stream().map(disk -> {
             disk.updateAttributes(); // refresh I/O stats
             Map<String, Object> data = new HashMap<>();
-            data.put("Name", disk.getName());
-            data.put("Model", disk.getModel());
-            data.put("Disk Serial Number:", disk.getSerial());
-            data.put("Disk Size", (disk.getSize() / (1024 * 1024 * 1024)) + " GB");
-            data.put("Disk Type", disk.getClass());
+            data.put("name", disk.getName());
+            data.put("model", disk.getModel());
+            data.put("serial", disk.getSerial());
+            data.put("size", String.format("%.1f GB", disk.getSize() / (1024.0 * 1024.0 * 1024.0)));
 
             // Partition info
             data.put("Partitions", disk.getPartitions().stream().map(partition -> {
@@ -224,8 +235,8 @@ public class SystemMonitorService {
                 writeSpeed = String.format("%.2f kB/s", writeSpeedKBs);
             }
             // Format as KB/s
-            data.put("Read Speed", readSpeed);
-            data.put("Write Speed", writeSpeed);
+            data.put("readSpeed", readSpeed);
+            data.put("writeSpeed", writeSpeed);
 
             return data;
         }).collect(Collectors.toList());
@@ -266,18 +277,18 @@ public class SystemMonitorService {
                     prevBytesRecv.put(ifName, bytesReceived);
                     prevTimeStaps.put(ifName, now);
 
-                    data.put("Name", network.getName());
-                    data.put("Display Name", network.getDisplayName());
-                    data.put("MAC Address", network.getMacaddr());
-                    data.put("MTU (bytes)", network.getMTU());
-                    data.put("Interface Speed", (network.getSpeed() / 1_000_000) + " mb/s");
-                    data.put("Total Bytes Sent", network.getBytesSent());
-                    data.put("Total Bytes Received", network.getBytesRecv());
-                    data.put("IP V4 Address", Arrays.toString(network.getIPv4addr()).replace("[", "").replace("]", ""));
-                    data.put("IP V6 Address", getPrimaryIpv6Address(network.getIPv6addr()));
-                    data.put("Subnet Mask", formatSubnetMasks(network.getSubnetMasks()));
-                    data.put("Upload Speed", String.format("%.2f mb/s", sentMbps));
-                    data.put("Download Speed", String.format("%.2f mb/s", recvMbps));
+                    data.put("name", network.getName());
+                    data.put("displayName", network.getDisplayName());
+                    data.put("macAddress", network.getMacaddr());
+                    data.put("mtu", network.getMTU());
+                    data.put("speed", (network.getSpeed() / 1_000_000) + " mb/s");
+                    data.put("totalBytesSent", network.getBytesSent());
+                    data.put("totalBytesReceived", network.getBytesRecv());
+                    data.put("ipv4", Arrays.toString(network.getIPv4addr()).replace("[", "").replace("]", ""));
+                    data.put("ipv6", getPrimaryIpv6Address(network.getIPv6addr()));
+                    data.put("subnetMask", formatSubnetMasks(network.getSubnetMasks()));
+                    data.put("uploadSpeed", String.format("%.2f mb/s", sentMbps));
+                    data.put("downloadSpeed", String.format("%.2f mb/s", recvMbps));
 
                     String type = "Unknown";
                     String name = network.getName().toLowerCase();
@@ -290,7 +301,7 @@ public class SystemMonitorService {
                         type = "Bluetooth";
                     }
 
-                    data.put("Type", type);
+                    data.put("connectionType", type);
                     return data;
                 }).collect(Collectors.toList());
     }
