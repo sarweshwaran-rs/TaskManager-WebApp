@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
+import oshi.hardware.ComputerSystem;
 import oshi.hardware.GlobalMemory;
 import oshi.hardware.GraphicsCard;
 import oshi.hardware.HWDiskStore;
@@ -20,6 +21,7 @@ import oshi.hardware.Sensors;
 import oshi.hardware.VirtualMemory;
 import oshi.software.os.OSProcess;
 import oshi.software.os.OperatingSystem;
+import oshi.hardware.Baseboard;
 
 @Service
 public class SystemMonitorService {
@@ -139,21 +141,19 @@ public class SystemMonitorService {
 
             // getProcessCpuLoadBetweenTicks provides a value between 0.0 and 1.0
             double cpuLoad = p.getProcessCpuLoadBetweenTicks(priorProc) * 100.0;
+            
+            double roundedCpuLoad = Math.round(cpuLoad * 100.0) / 100.0;
 
             Map<String, Object> procData = new HashMap<>();
             procData.put("pid", p.getProcessID());
             procData.put("name", p.getName());
-            procData.put("cpuLoad", cpuLoad);
+            procData.put("cpuLoad", roundedCpuLoad);
             procData.put("memory", p.getResidentSetSize());
             processList.add(procData);
         }
-        // Update snapshot for the next call
+        
         priorSnapshot = currentSnapshot;
 
-        // Sort the list by the calculated real-time CPU load in descending order
-        processList.sort((p1, p2) -> Double.compare((double) p2.get("cpuLoad"), (double) p1.get("cpuLoad")));
-
-        // Return the top 'limit' processes
         return processList.stream().limit(limit).collect(Collectors.toList());
     }
 
@@ -341,5 +341,20 @@ public class SystemMonitorService {
             }
         }
         return Arrays.toString(masks.toArray()).replace("[", "").replace("]", "");
+    }
+
+    public Map<String, Object> getComputerInfo() {
+        Map<String, Object> data = new HashMap<>();
+        Baseboard baseboard = systeminfo.getHardware().getComputerSystem().getBaseboard();
+        ComputerSystem cs = systeminfo.getHardware().getComputerSystem();
+        data.put("Manufacturer", baseboard.getManufacturer());
+        data.put("Baseboard Model", baseboard.getModel());
+        data.put("System Model", cs.getModel());
+        data.put("Version Number", baseboard.getVersion());
+        data.put("Firmware", cs.getFirmware());
+        data.put("Firmware Version", cs.getFirmware().getVersion());
+        data.put("Firmware Description", cs.getFirmware().getDescription());
+        data.put("Firmware Release Date", cs.getFirmware().getReleaseDate());
+        return data;
     }
 }
