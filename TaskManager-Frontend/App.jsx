@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Client } from "@stomp/stompjs";
-import Header from "./components/Header.jsx";
+import Header from "./Components/Header.jsx";
 import Sidebar from "../TaskManager-Frontend/Components/Sidebar.jsx";
 import Dashboard from "../TaskManager-Frontend/Components/Dashboard.jsx";
 import Performance from "../TaskManager-Frontend/Components/Performance.jsx";
