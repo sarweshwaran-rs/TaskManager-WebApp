@@ -44,23 +44,39 @@ function App() {
           setLatestMetrics(data);
 
           setHistory((prevHistory) => {
-            const newCpuHistory = [
-              ...prevHistory.cpu,
-              parseFloat(data.cpu?.systemLoad || 0),
-            ].slice(-MAX_HISTORY_LENGTH);
-
-            let memPercent = 0;
-            if (data.memory && data.memory.totalGB > 0) {
-              memPercent = (data.memory.usedGB / data.memory.totalGB) * 100;
-            }
-            const newMemoryHistory = [...prevHistory.memory, memPercent].slice(
+<<<<<<< HEAD
+            const cpuLoad = parseFloat(data.cpu?.systemLoad || 0);
+            const newCpuHistory = [...prevHistory.cpu, cpuLoad].slice(
               -MAX_HISTORY_LENGTH
             );
 
-            return {
-              cpu: newCpuHistory,
-              memory: newMemoryHistory,
-            };
+            const totalMem = parseFloat(data.memory?.totalGB);
+            const usedMem = parseFloat(data.memory?.usedGB);
+            const memPercent = totalMem > 0 ? (usedMem / totalMem) * 100 : 0;
+            const newMemoryHistory = [...prevHistory.memory, memPercent].slice(
+              -MAX_HISTORY_LENGTH
+            );
+=======
+            const newHistory = { ...prevHistory };
+
+            if (data.cpu && data.cpu.systemLoad) {
+              newHistory.cpu = [
+                ...prevHistory.cpu,
+                parseFloat(data.cpu.systemLoad),
+              ].slice(-MAX_HISTORY_LENGTH);
+            }
+>>>>>>> upstream/backend
+
+            if (data.memory && data.memory.usedGB && data.memory.totalGB) {
+              const used = parseFloat(data.memory.usedGB);
+              const total = parseFloat(data.memory.totalGB);
+              newHistory.memory = [
+                ...prevHistory.memory,
+                total > 0 ? (used / total) * 100 : 0,
+              ].slice(-MAX_HISTORY_LENGTH);
+            }
+
+            return newHistory;
           });
         });
       },
