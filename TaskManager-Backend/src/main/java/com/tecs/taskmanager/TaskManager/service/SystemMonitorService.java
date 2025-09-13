@@ -139,6 +139,11 @@ public class SystemMonitorService {
             currentSnapshot.put(p.getProcessID(), p);
             OSProcess priorProc = priorSnapshot.get(p.getProcessID());
 
+            // if priorProc is not null, check if start time is the same. If not, it's a new process with a reused PID
+            if (priorProc != null && p.getStartTime() != priorProc.getStartTime()) {
+                priorProc = null;
+            }
+
             // getProcessCpuLoadBetweenTicks provides a value between 0.0 and 1.0
             double cpuLoad = p.getProcessCpuLoadBetweenTicks(priorProc) * 100.0;
             
@@ -153,6 +158,9 @@ public class SystemMonitorService {
         }
         
         priorSnapshot = currentSnapshot;
+
+        // Sort by CPU load in descending order
+        processList.sort((p1, p2) -> Double.compare((double) p2.get("cpuLoad"), (double) p1.get("cpuLoad")));
 
         return processList.stream().limit(limit).collect(Collectors.toList());
     }
