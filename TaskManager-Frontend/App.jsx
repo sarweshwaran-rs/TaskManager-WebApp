@@ -44,19 +44,6 @@ function App() {
           setLatestMetrics(data);
 
           setHistory((prevHistory) => {
-<<<<<<< HEAD
-            const cpuLoad = parseFloat(data.cpu?.systemLoad || 0);
-            const newCpuHistory = [...prevHistory.cpu, cpuLoad].slice(
-              -MAX_HISTORY_LENGTH
-            );
-
-            const totalMem = parseFloat(data.memory?.totalGB);
-            const usedMem = parseFloat(data.memory?.usedGB);
-            const memPercent = totalMem > 0 ? (usedMem / totalMem) * 100 : 0;
-            const newMemoryHistory = [...prevHistory.memory, memPercent].slice(
-              -MAX_HISTORY_LENGTH
-            );
-=======
             const newHistory = { ...prevHistory };
 
             if (data.cpu && data.cpu.systemLoad) {
@@ -65,7 +52,6 @@ function App() {
                 parseFloat(data.cpu.systemLoad),
               ].slice(-MAX_HISTORY_LENGTH);
             }
->>>>>>> upstream/backend
 
             if (data.memory && data.memory.usedGB && data.memory.totalGB) {
               const used = parseFloat(data.memory.usedGB);
