@@ -44,14 +44,28 @@ function App() {
           setLatestMetrics(data);
 
           setHistory((prevHistory) => {
+<<<<<<< Updated upstream
             const cpuLoad = data.cpu?.systemLoad
               ? parseFloat(data.cpu.systemLoad)
               : 0;
+=======
+            const cpuLoad = parseFloat(data.cpu?.systemLoad || 0);
+>>>>>>> Stashed changes
             const newCpuHistory = [...prevHistory.cpu, cpuLoad].slice(
               -MAX_HISTORY_LENGTH
             );
 
+<<<<<<< Updated upstream
             let memPercent = 0;
+=======
+            const totalMem = parseFloat(data.memory?.totalGB);
+            const usedMem = parseFloat(data.memory?.usedGB);
+            const memPercent = totalMem > 0 ? (usedMem / totalMem) * 100 : 0;
+            const newMemoryHistory = [...prevHistory.memory, memPercent].slice(
+              -MAX_HISTORY_LENGTH
+            );
+
+>>>>>>> Stashed changes
             if (data.memory && data.memory.usedGB && data.memory.totalGB) {
               const used = parseFloat(data.memory.usedGB);
               const total = parseFloat(data.memory.totalGB);
