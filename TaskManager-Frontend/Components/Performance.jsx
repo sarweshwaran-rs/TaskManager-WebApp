@@ -72,7 +72,7 @@ const Performance = ({ metrics, history }) => {
     {
       id: "gpus",
       label: "GPU",
-      value: `${metrics.gpus?.[0]?.["Device name"] || "N/A"}`,
+      value: `${metrics.gpus?.[0]?.name || "N/A"}`,
     },
   ];
 

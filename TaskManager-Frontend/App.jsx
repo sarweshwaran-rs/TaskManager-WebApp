@@ -44,28 +44,26 @@ function App() {
           setLatestMetrics(data);
 
           setHistory((prevHistory) => {
-            const cpuLoad = parseFloat(data.cpu?.systemLoad || 0);
+            const cpuLoad = data.cpu?.systemLoad
+              ? parseFloat(data.cpu.systemLoad)
+              : 0;
             const newCpuHistory = [...prevHistory.cpu, cpuLoad].slice(
               -MAX_HISTORY_LENGTH
             );
 
-            const totalMem = parseFloat(data.memory?.totalGB);
-            const usedMem = parseFloat(data.memory?.usedGB);
-            const memPercent = totalMem > 0 ? (usedMem / totalMem) * 100 : 0;
+            let memPercent = 0;
+            if (data.memory && data.memory.usedGB && data.memory.totalGB) {
+              const used = parseFloat(data.memory.usedGB);
+              const total = parseFloat(data.memory.totalGB);
+              if (total > 0) {
+                memPercent = (used / total) * 100;
+              }
+            }
             const newMemoryHistory = [...prevHistory.memory, memPercent].slice(
               -MAX_HISTORY_LENGTH
             );
 
-            if (data.memory && data.memory.usedGB && data.memory.totalGB) {
-              const used = parseFloat(data.memory.usedGB);
-              const total = parseFloat(data.memory.totalGB);
-              newHistory.memory = [
-                ...prevHistory.memory,
-                total > 0 ? (used / total) * 100 : 0,
-              ].slice(-MAX_HISTORY_LENGTH);
-            }
-
-            return newHistory;
+            return { cpu: newCpuHistory, memory: newMemoryHistory };
           });
         });
       },
