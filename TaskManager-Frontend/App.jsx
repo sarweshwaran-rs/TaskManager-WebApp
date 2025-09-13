@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { Client } from "@stomp/stompjs";
 import Header from "./components/Header.jsx";
-import CpuCard from "./components/CpuCard.jsx";
-import MemoryCard from "./components/MemoryCard.jsx";
-import ProcessList from "./components/ProcessList.jsx";
-import OsCard from "./components/OsCard.jsx";
-import DiskCard from "./components/DiskCard.jsx";
-import NetworkCard from "./components/NetworkCard.jsx";
-import GpuCard from "./components/GpuCard.jsx";
+import Sidebar from "../TaskManager-Frontend/Components/Sidebar.jsx";
+import Dashboard from "../TaskManager-Frontend/Components/Dashboard.jsx";
+import Performance from "../TaskManager-Frontend/Components/Performance.jsx";
+import ProcessList from "../TaskManager-Frontend/Components/ProcessList.jsx";
 
 const WEBSOCKET_URL = "ws://localhost:8080/ws";
+
+const PlaceholderView = ({ title }) => (
+  <div className="bg-brand-card rounded-lg shadow-lg text-center p-6">
+    <h2 className="text-xl font-bold mb-4 text-brand-text">{title}</h2>
+    <p className="text-brand-text-secondary">
+      This feature is not yet implemented.
+    </p>
+  </div>
+);
 
 function App() {
   const [latestMetrics, setLatestMetrics] = useState(null);
@@ -18,6 +24,7 @@ function App() {
     memory: [],
   });
   const [connectionStatus, setConnectionStatus] = useState("Connecting...");
+  const [activeView, setActiveView] = useState("dashboard");
 
   useEffect(() => {
     const MAX_HISTORY_LENGTH = 30; // Keep last 30 data points
@@ -70,63 +77,50 @@ function App() {
     };
   }, []);
 
+  const renderActiveView = () => {
+    if (!latestMetrics) {
+      return (
+        <div className="p-6 m-6 bg-brand-card rounded-lg shadow-lg text-center">
+          <p className="text-brand-text-secondary animate-pulse">
+            {{
+              Connecting: "Connecting to server...",
+              Connected: "Waiting for initial data from server...",
+              Error: "Connection error. Please check the server and refresh.",
+            }[connectionStatus] || "Loading..."}
+          </p>
+        </div>
+      );
+    }
+    switch (activeView) {
+      case "dashboard":
+        return <Dashboard data={latestMetrics} history={history} />;
+      case "processes":
+        return <ProcessList processes={latestMetrics.processes} />;
+      case "performance":
+        return <Performance metrics={latestMetrics} history={history} />;
+      case "app-history":
+        return <PlaceholderView title="App history" />;
+      case "startup":
+        return <PlaceholderView title="Startup apps" />;
+      case "users":
+        return <PlaceholderView title="Users" />;
+      case "details":
+        return <PlaceholderView title="Details" />;
+      case "services":
+        return <PlaceholderView title="Services" />;
+      default:
+        return <Dashboard data={latestMetrics} history={history} />;
+    }
+  };
+
   return (
-    <div className="bg-brand-dark text-brand-text min-h-screen font-sans">
-      <Header status={connectionStatus} />
-      <main>
-        {latestMetrics ? (
-          <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Main stats cards with charts */}
-            <div className="lg:col-span-8">
-              {latestMetrics.cpu && (
-                <CpuCard cpu={latestMetrics.cpu} history={history.cpu} />
-              )}
-            </div>
-            <div className="lg:col-span-4">
-              {latestMetrics.memory && (
-                <MemoryCard
-                  memory={latestMetrics.memory}
-                  history={history.memory}
-                />
-              )}
-            </div>
-
-            {/* Full-width process list */}
-            <div className="lg:col-span-12">
-              {latestMetrics.processes && (
-                <ProcessList processes={latestMetrics.processes} />
-              )}
-            </div>
-
-            {/* Other info cards */}
-            <div className="lg:col-span-4">
-              {latestMetrics.os && latestMetrics.cpu && (
-                <OsCard
-                  os={latestMetrics.os}
-                  uptime={latestMetrics.cpu.Uptime}
-                />
-              )}
-            </div>
-            <div className="lg:col-span-4">
-              {latestMetrics.disk && <DiskCard disks={latestMetrics.disk} />}
-            </div>
-            <div className="lg:col-span-4">
-              {latestMetrics.network && (
-                <NetworkCard networks={latestMetrics.network} />
-              )}
-            </div>
-            <div className="lg:col-span-4">
-              {latestMetrics.gpu && <GpuCard gpus={latestMetrics.gpu} />}
-            </div>
-          </div>
-        ) : (
-          <div className="p-6 m-6 bg-brand-card rounded-lg shadow-lg text-center">
-            Connecting to server and waiting for data...
-          </div>
-        )}
-      </main>
+    <div className="bg-brand-dark text-brand-text h-screen font-sans flex">
+      <Sidebar activeView={activeView} setActiveView={setActiveView} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header status={connectionStatus} />
+        <main className="flex-1 overflow-y-auto">{renderActiveView()}</main>
+      </div>
     </div>
   );
 }
-
 export default App;

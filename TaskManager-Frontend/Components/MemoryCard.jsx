@@ -48,13 +48,54 @@ const chartOptions = {
   },
 };
 
+const MemoryUsageBar = ({ label, used, total, percent }) => (
+  <div className="mb-4">
+    <label className="block mb-1 font-medium text-brand-text-secondary text-sm">
+      {label}
+    </label>
+    <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
+      <div
+        className="bg-brand-sky h-full rounded-full transition-all duration-500"
+        style={{ width: `${percent}%` }}
+      ></div>
+    </div>
+    <span className="text-sm text-brand-text-secondary mt-1 block">
+      {total > 0 ? `${used.toFixed(1)} GB / ${total.toFixed(1)} GB` : "N/A"}
+    </span>
+  </div>
+);
+
+const MemoryStick = ({ stick }) => (
+  <div className="p-3 mb-2 border border-gray-700 rounded-md">
+    <h4 className="font-semibold text-sm text-brand-text">{stick.bankLabel}</h4>
+    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-brand-text-secondary mt-1">
+      <div>
+        <strong className="font-medium text-brand-text">Capacity:</strong>{" "}
+        {formatBytesToGB(stick.capacity)}
+      </div>
+      <div>
+        <strong className="font-medium text-brand-text">Speed:</strong>{" "}
+        {formatHertzToMHz(stick.clockSpeed)}
+      </div>
+      <div>
+        <strong className="font-medium text-brand-text">Type:</strong>{" "}
+        {stick.memoryType}
+      </div>
+      <div>
+        <strong className="font-medium text-brand-text">Manufacturer:</strong>{" "}
+        {stick.manufacturer}
+      </div>
+    </div>
+  </div>
+);
+
 const MemoryCard = ({ memory, history }) => {
-  const total = parseFloat(memory.totalGB) || 0;
-  const used = parseFloat(memory.usedGB) || 0;
+  const total = parseFloat(memory.totalGB);
+  const used = parseFloat(memory.usedGB);
   const memPercent = total > 0 ? (used / total) * 100 : 0;
 
-  const swapTotal = parseFloat(memory.swapTotalGB) || 0;
-  const swapUsed = parseFloat(memory.swapUsedGB) || 0;
+  const swapTotal = parseFloat(memory.swapTotalGB);
+  const swapUsed = parseFloat(memory.swapUsedGB);
   const swapPercent = swapTotal > 0 ? (swapUsed / swapTotal) * 100 : 0;
   const physicalMemory = memory["Physical Memory"] || [];
 
@@ -70,40 +111,22 @@ const MemoryCard = ({ memory, history }) => {
   };
 
   return (
-    <div className="bg-brand-card rounded-lg shadow-lg p-6 flex flex-col h-full">
+    <div className="bg-brand-card rounded-lg shadow-lg p-6 flex flex-col">
       <h2 className="text-xl font-bold text-brand-text border-b border-gray-700 pb-3 mb-4">
         Memory
       </h2>
-      <div className="mb-4">
-        <label className="block mb-1 font-medium text-brand-text-secondary text-sm">
-          Physical Memory
-        </label>
-        <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
-          <div
-            className="bg-brand-sky h-full rounded-full transition-all duration-500"
-            style={{ width: `${memPercent}%` }}
-          ></div>
-        </div>
-        <span className="text-sm text-brand-text-secondary mt-1 block">{`${used.toFixed(
-          1
-        )} GB / ${total.toFixed(1)} GB`}</span>
-      </div>
-      <div className="mb-4">
-        <label className="block mb-1 font-medium text-brand-text-secondary text-sm">
-          Swap
-        </label>
-        <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
-          <div
-            className="bg-brand-sky h-full rounded-full transition-all duration-500"
-            style={{ width: `${swapPercent}%` }}
-          ></div>
-        </div>
-        <span className="text-sm text-brand-text-secondary mt-1 block">
-          {swapTotal > 0
-            ? `${swapUsed.toFixed(1)} GB / ${swapTotal.toFixed(1)} GB`
-            : "N/A"}
-        </span>
-      </div>
+      <MemoryUsageBar
+        label="Physical Memory"
+        used={used}
+        total={total}
+        percent={memPercent}
+      />
+      <MemoryUsageBar
+        label="Swap"
+        used={swapUsed}
+        total={swapTotal}
+        percent={swapPercent}
+      />
 
       <div className="relative h-24 mb-4">
         <LineChart data={chartData} options={chartOptions} />
@@ -115,38 +138,7 @@ const MemoryCard = ({ memory, history }) => {
             Memory Slots
           </h3>
           {physicalMemory.map((stick, index) => (
-            <div
-              key={index}
-              className="p-3 mb-2 border border-gray-700 rounded-md"
-            >
-              <h4 className="font-semibold text-sm text-brand-text">
-                {stick.bankLabel}
-              </h4>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-brand-text-secondary mt-1">
-                <div>
-                  <strong className="font-medium text-brand-text">
-                    Capacity:
-                  </strong>{" "}
-                  {formatBytesToGB(stick.capacity)}
-                </div>
-                <div>
-                  <strong className="font-medium text-brand-text">
-                    Speed:
-                  </strong>{" "}
-                  {formatHertzToMHz(stick.clockSpeed)}
-                </div>
-                <div>
-                  <strong className="font-medium text-brand-text">Type:</strong>{" "}
-                  {stick.memoryType}
-                </div>
-                <div>
-                  <strong className="font-medium text-brand-text">
-                    Manufacturer:
-                  </strong>{" "}
-                  {stick.manufacturer}
-                </div>
-              </div>
-            </div>
+            <MemoryStick key={stick.bankLabel || index} stick={stick} />
           ))}
         </div>
       )}

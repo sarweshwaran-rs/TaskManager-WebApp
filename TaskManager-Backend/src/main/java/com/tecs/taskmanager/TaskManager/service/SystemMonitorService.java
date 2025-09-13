@@ -45,7 +45,7 @@ public class SystemMonitorService {
         double totalLoadPercent = processor.getSystemCpuLoadBetweenTicks(prevTicks) * 100;
         prevTicks = processor.getSystemCpuLoadTicks();
 
-        data.put("systemLoad", String.format("%.2f", totalLoadPercent));
+        data.put("systemLoad", totalLoadPercent);
 
         double[] processorLoad = processor.getProcessorCpuLoadBetweenTicks(prevProcTicks);
         prevProcTicks = processor.getProcessorCpuLoadTicks();
@@ -111,12 +111,13 @@ public class SystemMonitorService {
         double swapTotalGB = virtualMemory.getSwapTotal() / (1024.0 * 1024.0 * 1024.0);
         double swapUsedGB = virtualMemory.getSwapUsed() / (1024.0 * 1024.0 * 1024.0);
 
-        data.put("totalGB", String.format("%.2f",totalGB));
-        data.put("availableGB", String.format("%.2f", availableGB));
-        data.put("usedGB", String.format("%.2f", usedGB));
 
-        data.put("swapTotalGB", String.format("%.2f", swapTotalGB));
-        data.put("swapUsedGB", String.format("%.2f", swapUsedGB));
+        data.put("totalGB", totalGB);
+        data.put("availableGB", availableGB);
+        data.put("usedGB", usedGB);
+
+        data.put("swapTotalGB", swapTotalGB);
+        data.put("swapUsedGB", swapUsedGB);
 
         data.put("Physical Memory", memory.getPhysicalMemory());
         return data;

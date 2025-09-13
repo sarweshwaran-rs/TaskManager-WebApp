@@ -1,14 +1,13 @@
 package com.tecs.taskmanager.TaskManager.controller;
 
-import com.tecs.taskmanager.TaskManager.service.SystemMonitorService;
+import java.util.HashMap;
+import java.util.Map;
 
-//import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.tecs.taskmanager.TaskManager.service.SystemMonitorService;
 
 @Controller
 public class MetricWebSocketController {
@@ -28,7 +27,7 @@ public class MetricWebSocketController {
         data.put("memory", service.getMemoryInfo());
         data.put("os", service.getOsInfo());
         data.put("processes", service.getProcesses(10));
-        data.put("gpu", service.getGpuInfo());
+        data.put("gpus", service.getGpuInfo());
         data.put("disk", service.getDiskInfo());
         data.put("network", service.getNetworkInfo());
         
