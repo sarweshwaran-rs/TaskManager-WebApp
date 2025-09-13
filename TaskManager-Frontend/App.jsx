@@ -46,13 +46,16 @@ function App() {
           setHistory((prevHistory) => {
             const newCpuHistory = [
               ...prevHistory.cpu,
-              parseFloat(data.cpu.systemLoad),
+              parseFloat(data.cpu?.systemLoad || 0),
             ].slice(-MAX_HISTORY_LENGTH);
 
-            const newMemoryHistory = [
-              ...prevHistory.memory,
-              (data.memory.usedGB / data.memory.totalGB) * 100,
-            ].slice(-MAX_HISTORY_LENGTH);
+            let memPercent = 0;
+            if (data.memory && data.memory.totalGB > 0) {
+              memPercent = (data.memory.usedGB / data.memory.totalGB) * 100;
+            }
+            const newMemoryHistory = [...prevHistory.memory, memPercent].slice(
+              -MAX_HISTORY_LENGTH
+            );
 
             return {
               cpu: newCpuHistory,

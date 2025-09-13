@@ -90,21 +90,12 @@ const MemoryStick = ({ stick }) => (
 );
 
 const MemoryCard = ({ memory, history }) => {
-<<<<<<< HEAD
   const total = parseFloat(memory.totalGB);
   const used = parseFloat(memory.usedGB);
   const memPercent = total > 0 ? (used / total) * 100 : 0;
 
   const swapTotal = parseFloat(memory.swapTotalGB);
   const swapUsed = parseFloat(memory.swapUsedGB);
-=======
-  const total = parseFloat(memory.totalGB) || 0;
-  const used = parseFloat(memory.usedGB) || 0;
-  const memPercent = total > 0 ? (used / total) * 100 : 0;
-
-  const swapTotal = parseFloat(memory.swapTotalGB) || 0;
-  const swapUsed = parseFloat(memory.swapUsedGB) || 0;
->>>>>>> 2b732785a704ebdb9c74e6d5d042abd1b431d993
   const swapPercent = swapTotal > 0 ? (swapUsed / swapTotal) * 100 : 0;
   const physicalMemory = memory["Physical Memory"] || [];
 
