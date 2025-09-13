@@ -109,12 +109,21 @@ public class SystemMonitorService {
         double swapTotalGB = virtualMemory.getSwapTotal() / (1024.0 * 1024.0 * 1024.0);
         double swapUsedGB = virtualMemory.getSwapUsed() / (1024.0 * 1024.0 * 1024.0);
 
+<<<<<<< HEAD
         data.put("totalGB", totalGB);
         data.put("availableGB", availableGB);
         data.put("usedGB", usedGB);
 
         data.put("swapTotalGB", swapTotalGB);
         data.put("swapUsedGB", swapUsedGB);
+=======
+        data.put("totalGB", String.format("%.2f",totalGB));
+        data.put("availableGB", String.format("%.2f", availableGB));
+        data.put("usedGB", String.format("%.2f", usedGB));
+
+        data.put("swapTotalGB", String.format("%.2f", swapTotalGB));
+        data.put("swapUsedGB", String.format("%.2f", swapUsedGB));
+>>>>>>> 2b732785a704ebdb9c74e6d5d042abd1b431d993
 
         data.put("Physical Memory", memory.getPhysicalMemory());
         return data;
