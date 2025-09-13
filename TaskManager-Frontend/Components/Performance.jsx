@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import CpuCard from "./CpuCard.jsx";
-import MemoryCard from "../MemoryCard.jsx";
-import DiskCard from "./DiskCard.jsx";
-import NetworkCard from "./NetworkCard.jsx";
-import GpuCard from "./GpuCard.jsx";
+import CpuCard from "../Components/CpuCard.jsx";
+import MemoryCard from "../Components/MemoryCard.jsx";
+import DiskCard from "../Components/DiskCard.jsx";
+import NetworkCard from "../Components/NetworkCard.jsx";
+import GpuCard from "../Components/GpuCard.jsx";
+import OsCard from "../Components/OsCard.jsx";
 
 const PerfNavItem = ({ label, value, onClick, isSelected }) => (
   <button
@@ -39,6 +40,10 @@ const Performance = ({ metrics, history }) => {
         ) : null;
       case "gpus":
         return metrics.gpus ? <GpuCard gpus={metrics.gpus} /> : null;
+      case "os":
+        return metrics.os && metrics.cpu ? (
+          <OsCard os={metrics.os} uptime={metrics.cpu.Uptime} />
+        ) : null;
       default:
         return metrics.cpu ? (
           <CpuCard cpu={metrics.cpu} history={history.cpu} />
@@ -72,7 +77,12 @@ const Performance = ({ metrics, history }) => {
     {
       id: "gpus",
       label: "GPU",
-      value: `${metrics.gpus?.[0]?.name || "N/A"}`,
+      value: `${metrics.gpus?.[0]?.["Device name"] || "N/A"}`,
+    },
+    {
+      id: "os",
+      label: "System",
+      value: `${metrics.os?.family || "N/A"}`,
     },
   ];
 

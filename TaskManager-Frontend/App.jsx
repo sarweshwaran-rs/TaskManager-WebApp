@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Client } from "@stomp/stompjs";
 import Header from "./components/Header.jsx";
-import Dashboard from "./components/Dashboard.jsx";
+import Sidebar from "../TaskManager-Frontend/Components/Sidebar.jsx";
+import Dashboard from "../TaskManager-Frontend/Components/Dashboard.jsx";
+import Performance from "../TaskManager-Frontend/Components/Performance.jsx";
+import ProcessList from "../TaskManager-Frontend/Components/ProcessList.jsx";
 
 const WEBSOCKET_URL = "ws://localhost:8080/ws";
 
@@ -21,7 +24,7 @@ function App() {
     memory: [],
   });
   const [connectionStatus, setConnectionStatus] = useState("Connecting...");
-  const [activeView, setActiveView] = useState("performance");
+  const [activeView, setActiveView] = useState("dashboard");
 
   useEffect(() => {
     const MAX_HISTORY_LENGTH = 30; // Keep last 30 data points
@@ -78,13 +81,19 @@ function App() {
     if (!latestMetrics) {
       return (
         <div className="p-6 m-6 bg-brand-card rounded-lg shadow-lg text-center">
-          <p className="text-brand-text-secondary">
-            {connectionStatus} to server and waiting for data...
+          <p className="text-brand-text-secondary animate-pulse">
+            {{
+              Connecting: "Connecting to server...",
+              Connected: "Waiting for initial data from server...",
+              Error: "Connection error. Please check the server and refresh.",
+            }[connectionStatus] || "Loading..."}
           </p>
         </div>
       );
     }
     switch (activeView) {
+      case "dashboard":
+        return <Dashboard data={latestMetrics} history={history} />;
       case "processes":
         return <ProcessList processes={latestMetrics.processes} />;
       case "performance":
@@ -100,22 +109,17 @@ function App() {
       case "services":
         return <PlaceholderView title="Services" />;
       default:
-        return <Performance metrics={latestMetrics} history={history} />;
+        return <Dashboard data={latestMetrics} history={history} />;
     }
   };
 
   return (
-    <div className="bg-brand-dark text-brand-text h-screen font-sans flex flex-col">
-      <Header status={connectionStatus} />
-      <main>
-        {latestMetrics ? (
-          <Dashboard data={latestMetrics} history={history} />
-        ) : (
-          <div className="p-6 m-6 bg-brand-card rounded-lg shadow-lg text-center">
-            Connecting to server and waiting for data...
-          </div>
-        )}
-      </main>
+    <div className="bg-brand-dark text-brand-text h-screen font-sans flex">
+      <Sidebar activeView={activeView} setActiveView={setActiveView} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header status={connectionStatus} />
+        <main className="flex-1 overflow-y-auto">{renderActiveView()}</main>
+      </div>
     </div>
   );
 }

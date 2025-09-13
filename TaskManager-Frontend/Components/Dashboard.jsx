@@ -1,11 +1,11 @@
 import React from "react";
-import CpuCard from "../CpuCard.jsx";
-import MemoryCard from "../MemoryCard.jsx";
-import ProcessList from "../ProcessList.jsx";
-import OsCard from "../OsCard.jsx";
-import DiskCard from "../DiskCard.jsx";
-import NetworkCard from "../NetworkCard.jsx";
-import GpuCard from "../GpuCard.jsx";
+import CpuCard from "./CpuCard.jsx";
+import MemoryCard from "./MemoryCard.jsx";
+import ProcessList from "./ProcessList.jsx";
+import OsCard from "./OsCard.jsx";
+import DiskCard from "./DiskCard.jsx";
+import NetworkCard from "./NetworkCard.jsx";
+import GpuCard from "./GpuCard.jsx";
 
 const Dashboard = ({ data, history }) => {
   return (
