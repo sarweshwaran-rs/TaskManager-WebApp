@@ -37,8 +37,8 @@ const Performance = ({ metrics, history }) => {
         return metrics.network ? (
           <NetworkCard networks={metrics.network} />
         ) : null;
-      case "gpu":
-        return metrics.gpu ? <GpuCard gpus={metrics.gpu} /> : null;
+      case "gpus":
+        return metrics.gpus ? <GpuCard gpus={metrics.gpus} /> : null;
       default:
         return metrics.cpu ? (
           <CpuCard cpu={metrics.cpu} history={history.cpu} />
@@ -55,22 +55,24 @@ const Performance = ({ metrics, history }) => {
     {
       id: "memory",
       label: "Memory",
-      value: `${metrics.memory?.used} / ${metrics.memory?.total}`,
+      value: `${metrics.memory?.usedGB?.toFixed(1) || "N/A"} GB / ${
+        metrics.memory?.totalGB?.toFixed(1) || "N/A"
+      } GB`,
     },
     {
       id: "disk",
       label: "Disk",
-      value: `${metrics.disk?.[0]?.["Disk Size"] || "N/A"}`,
+      value: `${metrics.disk?.[0]?.model || "N/A"}`,
     },
     {
       id: "network",
-      label: "Wi-Fi",
-      value: `${metrics.network?.[0]?.["Display Name"] || "N/A"}`,
+      label: "Network",
+      value: `${metrics.network?.[0]?.displayName || "N/A"}`,
     },
     {
-      id: "gpu",
+      id: "gpus",
       label: "GPU",
-      value: `${metrics.gpu?.[0]?.["Device name"] || "N/A"}`,
+      value: `${metrics.gpus?.[0]?.["Device name"] || "N/A"}`,
     },
   ];
 
@@ -79,7 +81,8 @@ const Performance = ({ metrics, history }) => {
       <div className="w-48 flex-shrink-0 space-y-1 p-4 border-r border-gray-800 overflow-y-auto">
         {metricsList.map(
           (m) =>
-            metrics[m.id] && (
+            metrics[m.id] &&
+            (!Array.isArray(metrics[m.id]) || metrics[m.id].length > 0) && (
               <PerfNavItem
                 key={m.id}
                 label={m.label}

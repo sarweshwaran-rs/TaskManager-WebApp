@@ -16,7 +16,9 @@ const WEBSOCKET_URL = "ws://localhost:8080/ws";
 const PlaceholderView = ({ title }) => (
   <div className="bg-brand-card rounded-lg shadow-lg text-center p-6">
     <h2 className="text-xl font-bold mb-4 text-brand-text">{title}</h2>
-    <p className="text-brand-text-secondary">This feature is not yet implemented.</p>
+    <p className="text-brand-text-secondary">
+      This feature is not yet implemented.
+    </p>
   </div>
 );
 
@@ -43,18 +45,16 @@ function App() {
 
           setHistory((prevHistory) => {
             const cpuLoad = parseFloat(data.cpu?.systemLoad || 0);
-            const newCpuHistory = [
-              ...prevHistory.cpu,
-              cpuLoad,
-            ].slice(-MAX_HISTORY_LENGTH);
+            const newCpuHistory = [...prevHistory.cpu, cpuLoad].slice(
+              -MAX_HISTORY_LENGTH
+            );
 
-            const totalMem = parseFloat(data.memory?.total);
-            const usedMem = parseFloat(data.memory?.used);
+            const totalMem = parseFloat(data.memory?.totalGB);
+            const usedMem = parseFloat(data.memory?.usedGB);
             const memPercent = totalMem > 0 ? (usedMem / totalMem) * 100 : 0;
-            const newMemoryHistory = [
-              ...prevHistory.memory,
-              memPercent,
-            ].slice(-MAX_HISTORY_LENGTH);
+            const newMemoryHistory = [...prevHistory.memory, memPercent].slice(
+              -MAX_HISTORY_LENGTH
+            );
 
             return {
               cpu: newCpuHistory,
@@ -83,7 +83,9 @@ function App() {
     if (!latestMetrics) {
       return (
         <div className="p-6 m-6 bg-brand-card rounded-lg shadow-lg text-center">
-          <p className="text-brand-text-secondary">{connectionStatus} to server and waiting for data...</p>
+          <p className="text-brand-text-secondary">
+            {connectionStatus} to server and waiting for data...
+          </p>
         </div>
       );
     }

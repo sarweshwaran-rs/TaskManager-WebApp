@@ -4,9 +4,9 @@ import InfoCard from "./InfoCard.jsx";
 const GpuCard = ({ gpus }) => {
   return (
     <InfoCard title="Graphics">
-      {gpus.map((gpu, index) => (
+      {gpus.map((gpu) => (
         <div
-          key={index}
+          key={gpu["Device name"]}
           className="p-3 mb-2 border border-gray-700 rounded-md last:mb-0"
         >
           <h3 className="font-semibold text-sm text-brand-text">
