@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Client } from "@stomp/stompjs";
+<<<<<<< Updated upstream
 import Header from "./Components/Header.jsx";
 import CpuCard from "./Components/CpuCard.jsx";
 import MemoryCard from "./Components/MemoryCard.jsx";
@@ -10,6 +11,10 @@ import NetworkCard from "./Components/NetworkCard.jsx";
 import GpuCard from "./Components/GpuCard.jsx";
 import Sidebar from "./Components/Sidebar.jsx";
 import Performance from "./Components/Performance.jsx";
+=======
+import Header from "./components/Header.jsx";
+import Dashboard from "./components/Dashboard.jsx";
+>>>>>>> Stashed changes
 
 const WEBSOCKET_URL = "ws://localhost:8080/ws";
 
@@ -115,10 +120,22 @@ function App() {
   return (
     <div className="bg-brand-dark text-brand-text h-screen font-sans flex flex-col">
       <Header status={connectionStatus} />
+<<<<<<< Updated upstream
       <div className="flex flex-1 overflow-hidden">
         <Sidebar activeView={activeView} setActiveView={setActiveView} />
         <main className="flex-1 overflow-y-auto p-6">{renderActiveView()}</main>
       </div>
+=======
+      <main>
+        {latestMetrics ? (
+          <Dashboard data={latestMetrics} history={history} />
+        ) : (
+          <div className="p-6 m-6 bg-brand-card rounded-lg shadow-lg text-center">
+            Connecting to server and waiting for data...
+          </div>
+        )}
+      </main>
+>>>>>>> Stashed changes
     </div>
   );
 }

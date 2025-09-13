@@ -38,7 +38,7 @@ const Dashboard = ({ data, history }) => {
         {data.network && <NetworkCard networks={data.network} />}
       </div>
       <div className="lg:col-span-4">
-        {data.gpus && <GpuCard gpus={data.gpus} />}
+        {data.gpu && <GpuCard gpus={data.gpu} />}
       </div>
     </div>
   );
