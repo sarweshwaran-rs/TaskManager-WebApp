@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import CpuCard from "./CpuCard.jsx";
-import MemoryCard from "./MemoryCard.jsx";
+import MemoryCard from "../MemoryCard.jsx";
 import DiskCard from "./DiskCard.jsx";
 import NetworkCard from "./NetworkCard.jsx";
 import GpuCard from "./GpuCard.jsx";
