@@ -49,4 +49,9 @@ public class SystemController {
     public List<Map<String, Object>> getNetworkInfo() {
         return service.getNetworkInfo();
     }
+
+    @GetMapping("/computer")
+    public Map<String, Object> getComputerInfo() {
+        return service.getComputerInfo();
+    }
 }
