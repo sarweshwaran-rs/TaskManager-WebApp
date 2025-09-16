@@ -1,18 +1,23 @@
 package com.tecs.taskmanager.TaskManager.controller;
 
 import com.tecs.taskmanager.TaskManager.service.SystemMonitorService;
+import com.tecs.taskmanager.TaskManager.model.DBInfo;
+import com.tecs.taskmanager.TaskManager.service.DBService;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api")
 public class SystemController {
     private final SystemMonitorService service;
+    private final DBService dbService;
 
-    public SystemController(SystemMonitorService service) {
+    public SystemController(SystemMonitorService service, DBService dbService) {
         this.service = service;
+        this.dbService = dbService;
     }
 
     @GetMapping("/cpu")
@@ -53,5 +58,10 @@ public class SystemController {
     @GetMapping("/computer")
     public Map<String, Object> getComputerInfo() {
         return service.getComputerInfo();
+    }
+
+    @GetMapping("/db")
+    public List<DBInfo> getDBInfo() {
+        return dbService.detectDBProcesses();
     }
 }
