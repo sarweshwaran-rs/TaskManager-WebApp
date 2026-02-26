@@ -17,6 +17,7 @@ public class SystemController {
     private final DBService dbService;
 
     public SystemController(SystemMonitorService service, DBService dbService) {
+        super();
         this.service = service;
         this.dbService = dbService;
     }
