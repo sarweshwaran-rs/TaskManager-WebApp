@@ -1,4 +1,4 @@
-package com.tecs.taskmanager.TaskManager.util;
+package com.tecs.taskmanager.TaskManager.core.common;
 
 import java.io.BufferedReader;
 import java.io.IOException;

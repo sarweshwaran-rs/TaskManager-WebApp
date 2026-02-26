@@ -1,4 +1,4 @@
-package com.tecs.taskmanager.TaskManager.controller;
+package com.tecs.taskmanager.TaskManager.websocket;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -7,7 +7,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 
-import com.tecs.taskmanager.TaskManager.service.SystemMonitorService;
+import com.tecs.taskmanager.TaskManager.core.common.monitoing.SystemMonitorService;
 
 @Controller
 public class MetricWebSocketController {

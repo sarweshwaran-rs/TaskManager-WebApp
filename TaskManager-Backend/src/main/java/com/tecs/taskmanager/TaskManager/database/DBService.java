@@ -1,7 +1,7 @@
-package com.tecs.taskmanager.TaskManager.service;
+package com.tecs.taskmanager.TaskManager.database;
 
+import com.tecs.taskmanager.TaskManager.core.common.PortFinder;
 import com.tecs.taskmanager.TaskManager.model.DBInfo;
-import com.tecs.taskmanager.TaskManager.util.PortFinder;
 
 import oshi.SystemInfo;
 import oshi.software.os.OSProcess;

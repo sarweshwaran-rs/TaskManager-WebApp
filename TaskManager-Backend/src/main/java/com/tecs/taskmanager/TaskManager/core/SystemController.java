@@ -1,8 +1,9 @@
-package com.tecs.taskmanager.TaskManager.controller;
+package com.tecs.taskmanager.TaskManager.core;
 
-import com.tecs.taskmanager.TaskManager.service.SystemMonitorService;
+import com.tecs.taskmanager.TaskManager.core.common.monitoing.SystemMonitorService;
+import com.tecs.taskmanager.TaskManager.database.DBService;
 import com.tecs.taskmanager.TaskManager.model.DBInfo;
-import com.tecs.taskmanager.TaskManager.service.DBService;
+
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.List;
