@@ -10,6 +10,8 @@ import com.tecs.taskmanager.dto.memory.MemoryInfoDTO;
 import com.tecs.taskmanager.dto.network.NetworkInfoDTO;
 import com.tecs.taskmanager.dto.os.OSInfoDTO;
 import com.tecs.taskmanager.dto.process.ProcessInfoDTO;
+import com.tecs.taskmanager.dto.process.ProcessTreeDTO;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,7 +24,10 @@ public class SystemSnapshotDTO {
     private CpuInfoDTO cpu;
     private MemoryInfoDTO memory;
     private OSInfoDTO os;
+    
     private List<ProcessInfoDTO> processes;
+    private List<ProcessTreeDTO> processTree;
+    
     private List<GPUInfoDTO> gpus;
     private List<DiskInfoDTO> disks;
     private List<NetworkInfoDTO> networks;

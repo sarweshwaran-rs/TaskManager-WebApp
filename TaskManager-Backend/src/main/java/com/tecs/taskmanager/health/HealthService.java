@@ -19,7 +19,7 @@ public class HealthService {
     }
 
     public SystemHealthDTO evaluateHealth() {
-        SystemSnapshotDTO snapshot = snapshotService.getSnapshot(5);
+        SystemSnapshotDTO snapshot = snapshotService.getSnapshot();
 
         List<ComponentHealthDTO> components = new ArrayList<>();
 

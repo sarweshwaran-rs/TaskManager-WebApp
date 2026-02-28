@@ -21,10 +21,10 @@ public class MetricWebSocketController {
     @Scheduled(fixedRate = 1000)
     public void publishMetrics() {
 
-        SystemSnapshotDTO snapshot = snapshotService.getSnapshot(10);
+        SystemSnapshotDTO snapshot = snapshotService.getSnapshot();
 
         if (snapshot != null) {
-            messagingTemplate.convertAndSend("/api/metrics", snapshot);
+            messagingTemplate.convertAndSend("/topic/metrics", snapshot);
         }
     }
 }

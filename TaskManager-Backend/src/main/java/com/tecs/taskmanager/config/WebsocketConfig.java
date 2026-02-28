@@ -21,13 +21,14 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
     
     @Override
     public void configureMessageBroker(@NonNull MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic","/api");
+        config.enableSimpleBroker("/topic");
+        config.setApplicationDestinationPrefixes("/app");
     }
 
     @Override
     public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
         // This registers the "/ws" endpoint, allowing clients to connect.
         // setAllowedOriginPatterns("*") allows connections from any origin, which is perfect for local development.
-        registry.addEndpoint("/ws").setAllowedOriginPatterns("*");
+        registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
     }
 }
