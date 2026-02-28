@@ -1,57 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Task Manager - Live Metrics</title>
-    <!-- SockJS is a more robust WebSocket library often used with Spring -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script> -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <title>System Monitor Live</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 40px; background-color: #f0f2f5; }
-        #metrics {
-            white-space: pre;
-            font-family: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", monospace;
-            background-color: #ffffff;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            padding: 20px;
-            font-size: 14px;
-            line-height: 1.6;
-            overflow-x: auto;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        body {
+            font-family: Arial;
+            background: #111;
+            color: white;
         }
-        h1 { color: #1f2937; }
+        .card {
+            background: #222;
+            padding: 15px;
+            margin: 10px;
+            border-radius: 8px;
+        }
+        h2 { color: #4CAF50; }
     </style>
 </head>
 <body>
 
-    <h1>Live System Metrics</h1>
-    <pre id="metrics">Connecting to server...</pre>
+<h1>🔥 Live System Monitor</h1>
 
-    <script>
-        // Use native websockets
-        const client = Stomp.client("ws://localhost:8080/ws");
+<div class="card">
+    <h2>CPU</h2>
+    <div id="cpu"></div>
+</div>
 
-        const onConnect = () => {
-            console.log("STOMP connection established!");
-            document.getElementById("metrics").textContent = "Subscribed to metrics feed. Waiting for data...";
-            
-            // Subscribe to the metrics topic
-            client.subscribe("/api/metrics", (message) => {
-                console.log("Received data:", message.body);
-                const data = JSON.parse(message.body);
-                document.getElementById("metrics").textContent = JSON.stringify(data, null, 2);
+<div class="card">
+    <h2>Memory</h2>
+    <div id="memory"></div>
+</div>
+
+<div class="card">
+    <h2>Processes</h2>
+    <div id="processes"></div>
+</div>
+
+<script>
+    var socket = new SockJS('/ws');
+    var stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, function () {
+
+        console.log("Connected to WebSocket");
+
+        stompClient.subscribe('/topic/metrics', function (message) {
+
+            var data = JSON.parse(message.body);
+
+            // CPU
+            document.getElementById("cpu").innerHTML =
+                "Usage: " + data.cpu.systemLoad + "%";
+
+            // Memory
+            document.getElementById("memory").innerHTML =
+                "Used: " + data.memory.usedGB + " GB (" +
+                data.memory.usagePercent + "%)";
+
+            // Processes (Top 5)
+            let processHtml = "";
+            data.processes.slice(0,5).forEach(p => {
+                processHtml += p.name + 
+                    " (CPU: " + p.cpuLoad + "%)<br>";
             });
-        };
 
-        const onError = (error) => {
-            console.error("STOMP Error: ", error);
-            document.getElementById("metrics").textContent = "Could not connect to the WebSocket server. Please ensure the backend is running and refresh the page.";
-        };
-
-        // Connect using STOMP
-        client.connect({}, onConnect, onError);
-    </script>
-
+            document.getElementById("processes").innerHTML = processHtml;
+        });
+    });
+</script>
 </body>
 </html>
