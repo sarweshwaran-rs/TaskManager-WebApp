@@ -2,6 +2,7 @@ package com.tecs.taskmanager.dto.snapshot;
 
 import java.util.List;
 
+import com.tecs.taskmanager.dto.battery.BatteryInfoDTO;
 import com.tecs.taskmanager.dto.cpu.CpuInfoDTO;
 import com.tecs.taskmanager.dto.database.DBInfo;
 import com.tecs.taskmanager.dto.disk.DiskInfoDTO;
@@ -28,6 +29,7 @@ public class SystemSnapshotDTO {
     private List<ProcessInfoDTO> processes;
     private List<ProcessTreeDTO> processTree;
     
+    private List<BatteryInfoDTO> batteries;
     private List<GPUInfoDTO> gpus;
     private List<DiskInfoDTO> disks;
     private List<NetworkInfoDTO> networks;
