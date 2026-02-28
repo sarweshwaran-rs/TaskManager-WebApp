@@ -34,12 +34,13 @@ public class SystemSnapshotService {
         this.databaseMonitor = databaseMonitor;
     }
 
-    public SystemSnapshotDTO getSnapshot(int processLimit) {
+    public SystemSnapshotDTO getSnapshot() {
         return new SystemSnapshotDTO(
             cpuMonitor.getCpuInfo(),
             memoryMonitor.getMemoryInfo(),
             osMonitor.getOSInfo(),
-            processMonitor.getTopProcesses(processLimit),
+            processMonitor.getAllProcesses(),
+            processMonitor.getProcessTree(),
             gpuMonitor.getGPUInfo(),
             diskMonitor.getDiskInfo(),
             networkMonitor.getNetworkInfo(),

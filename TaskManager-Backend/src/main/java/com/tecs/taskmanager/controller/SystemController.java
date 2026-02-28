@@ -18,6 +18,6 @@ public class SystemController {
 
     @GetMapping("/snapshot")
     public SystemSnapshotDTO getSnapshot() {
-        return service.getSnapshot(10);
+        return service.getSnapshot();
     }
 }
