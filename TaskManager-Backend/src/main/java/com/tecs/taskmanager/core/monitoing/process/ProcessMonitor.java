@@ -2,7 +2,9 @@ package com.tecs.taskmanager.core.monitoing.process;
 
 import java.util.List;
 
+import com.tecs.taskmanager.dto.process.ProcessGroupDTO;
 import com.tecs.taskmanager.dto.process.ProcessInfoDTO;
+import com.tecs.taskmanager.dto.process.ProcessSectionDTO;
 import com.tecs.taskmanager.dto.process.ProcessTreeDTO;
 
 public interface ProcessMonitor {
@@ -11,4 +13,6 @@ public interface ProcessMonitor {
     List<ProcessTreeDTO> getProcessTree();
     ProcessTreeDTO getProcessByPid(int pid);
     List<ProcessInfoDTO> getProcessByName(String name);
+    List<ProcessGroupDTO> getGroupedProcesses();
+    List<ProcessSectionDTO> getSectionProcesses();
 }
