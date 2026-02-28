@@ -6,8 +6,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,7 +21,8 @@ public class ProcessTreeDTO {
     private String commandLine;
     private String path;
     private String user;
-    
+    private String type;
+
     private String state;
     private int priority;
     
