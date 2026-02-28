@@ -5,12 +5,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
 import com.tecs.taskmanager.dto.process.ProcessGroupDTO;
 import com.tecs.taskmanager.dto.process.ProcessInfoDTO;
+import com.tecs.taskmanager.dto.process.ProcessKillPreviewDTO;
+import com.tecs.taskmanager.dto.process.ProcessKillResponseDTO;
 import com.tecs.taskmanager.dto.process.ProcessSectionDTO;
 import com.tecs.taskmanager.dto.process.ProcessTreeDTO;
 
@@ -286,5 +290,119 @@ public class OshiProcessMonitor implements ProcessMonitor {
                     .build());
         }
         return result;
+    }
+
+    @Override
+    public ProcessKillResponseDTO killProcess(int pid, boolean force) {
+        try {
+            if(pid <= 0) {
+                return buildResponse(pid, false, "Invalid PID");
+            }
+
+            if(pid == 1 || pid == 4) {
+                return buildResponse(pid, false, "Cannot kill system critical process");
+            }
+
+            int currentPid = (int) ProcessHandle.current().pid();
+
+            if(pid == currentPid) {
+                return buildResponse(pid, false, "Cannot kill current running process");
+            }
+
+            ProcessHandle handle = ProcessHandle.of(pid).orElse(null);
+            
+            if(handle == null || !handle.isAlive()) {
+                return buildResponse(pid, false, "Process not found or already terminated");
+            }
+
+            if(force) {
+                handle.destroyForcibly();
+            } else {
+                handle.destroy();
+            }
+
+            try {
+                handle.onExit().get(2, TimeUnit.SECONDS);
+            } catch(TimeoutException e) {} catch (Exception ex) { }
+            boolean terminated = !handle.isAlive();
+
+            return terminated ? 
+                buildResponse(pid, true, "Process terminated successfully") 
+                : buildResponse(pid, false, "Process did not terminate");
+        } catch (Exception e) {
+            return buildResponse(pid, false, "Error: " + e.getMessage());
+        }
+    }
+
+    private ProcessKillResponseDTO buildResponse(int pid, boolean success, String message) {
+        return new ProcessKillResponseDTO(pid, success, message);
+    }
+
+    @Override
+    public ProcessKillPreviewDTO previewKillTree(int pid) {
+        ProcessHandle root = ProcessHandle.of(pid).orElse(null);
+
+        if(root == null || !root.isAlive()) {
+            return null;
+        }
+
+        List<Integer> pids = new ArrayList<>();
+
+        pids.add(pid);
+
+        root.descendants().forEach(ph -> pids.add((int) ph.pid()));
+        
+        OSProcess process = os.getProcess(pid);
+        String rootName = process != null ? process.getName() : root.info().command().orElse("Unknown");
+        return ProcessKillPreviewDTO.builder()
+                .rootPid(pid)
+                .rootName(rootName)
+                .affectedPids(pids)
+                .totalProcesses(pids.size())
+                .build();
+    }
+
+    @Override
+    public ProcessKillResponseDTO killProcessTree(int pid, boolean force) {
+        try {
+            if(pid <= 0 || pid == 1 || pid == 4) {
+                return buildResponse(pid, false, "Cannot Kill system critical process");
+            }
+            int currentPid = (int) ProcessHandle.current().pid();
+            if(pid == currentPid) {
+                return buildResponse(pid, false, "Cannot kill current process");
+            }
+
+            ProcessHandle root = ProcessHandle.of(pid).orElse(null);
+
+            if(root == null || !root.isAlive()) {
+                return buildResponse(pid, false, "Process not found");
+            }
+
+            root.descendants().forEach(ph -> {
+                if(force) {
+                    ph.destroyForcibly();
+                } else {
+                    ph.destroy();
+                }
+            });
+
+            if(force) {
+                root.destroyForcibly();
+            } else {
+                root.destroy();
+            }
+
+            try {
+                root.onExit().get(3, TimeUnit.SECONDS);
+            } catch (Exception ignored) { }
+
+            boolean terminated = !root.isAlive();
+
+            return terminated ? buildResponse(pid, true, "Process tree terminated successfully") 
+                : buildResponse(pid, false, "Process tree did not fully terminated");
+        } catch (Exception e) {
+            return buildResponse( pid, false, "Error: " + e.getMessage());
+        }
     }
 }
