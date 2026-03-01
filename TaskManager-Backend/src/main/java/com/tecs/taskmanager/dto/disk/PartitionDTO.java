@@ -15,4 +15,8 @@ public class PartitionDTO {
     private String uuid;
     private String size;
     private String mountPoint;
+
+    private double totalGB;
+    private double usedGB;
+    private double usagePercent;
 }

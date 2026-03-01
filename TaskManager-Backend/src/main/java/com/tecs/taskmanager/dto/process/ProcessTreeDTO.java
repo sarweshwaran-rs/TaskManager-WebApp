@@ -30,11 +30,15 @@ public class ProcessTreeDTO {
     private double memoryPercent;
     
     private long memory;
+    private String FMemory;
     private long virtualMemory;
+    private String FVirtualMemory;
     private long threads;
     
     private long starttime;
+    private String FStarttime;
     private long uptime;
+    private String FUptime;
     
     private int bitness;
     private List<ProcessTreeDTO> children;
