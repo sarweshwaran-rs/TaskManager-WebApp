@@ -5,23 +5,20 @@ import org.springframework.stereotype.Component;
 import com.tecs.taskmanager.dto.os.ComputerInfoDTO;
 import com.tecs.taskmanager.dto.os.OSInfoDTO;
 
-import oshi.SystemInfo;
 import oshi.hardware.Baseboard;
 import oshi.hardware.ComputerSystem;
 import oshi.software.os.OperatingSystem;
 
 @Component
 public class OshiOSMonitor implements OSMonitor {
-    private final SystemInfo systemInfo;
     private final OperatingSystem os;
     private final Baseboard baseboard;
     private final ComputerSystem cs;
 
-    public OshiOSMonitor() {
-        this.systemInfo = new SystemInfo();
-        this.os = systemInfo.getOperatingSystem();
-        this.baseboard = systemInfo.getHardware().getComputerSystem().getBaseboard();
-        this.cs = systemInfo.getHardware().getComputerSystem();
+    public OshiOSMonitor(OperatingSystem operatingSystem, Baseboard baseboard, ComputerSystem computerSystem) {
+        this.os = operatingSystem;
+        this.baseboard = baseboard;
+        this.cs = computerSystem;
     }
 
     @Override

@@ -7,20 +7,17 @@ import org.springframework.stereotype.Component;
 import com.tecs.taskmanager.dto.memory.MemoryInfoDTO;
 import com.tecs.taskmanager.dto.memory.PhysicalMemoryDTO;
 
-import oshi.SystemInfo;
 import oshi.hardware.GlobalMemory;
 import oshi.hardware.VirtualMemory;
 
 @Component
 public class OshiMemoryMonitor implements MemoryMonitor {
-    private final SystemInfo systemInfo;
     private final GlobalMemory memory;
     private final VirtualMemory virtualMemory;
 
-    public OshiMemoryMonitor() {
-        this.systemInfo = new SystemInfo();
-        this.memory = systemInfo.getHardware().getMemory();
-        this.virtualMemory = memory.getVirtualMemory();
+    public OshiMemoryMonitor(GlobalMemory globalMemory, VirtualMemory virtualMemory) {
+        this.memory = globalMemory;
+        this.virtualMemory = virtualMemory;
     }
 
     private double round(double value) {

@@ -1,5 +1,6 @@
 package com.tecs.taskmanager.core.monitoing.process;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,9 +29,9 @@ public class OshiProcessMonitor implements ProcessMonitor {
     private final OperatingSystem os;
     private Map<Integer, OSProcess> previousSnapshot = new ConcurrentHashMap<>();
 
-    public OshiProcessMonitor() {
-        this.systemInfo = new SystemInfo();
-        this.os = systemInfo.getOperatingSystem();
+    public OshiProcessMonitor(SystemInfo systemInfo, OperatingSystem operatingSystem) {
+        this.systemInfo = systemInfo;
+        this.os = operatingSystem;
     }
 
     // Classification Engine
@@ -146,11 +147,29 @@ public class OshiProcessMonitor implements ProcessMonitor {
 
     @Override
     public ProcessTreeDTO getProcessByPid(int pid) {
-        OSProcess process = os.getProcess(pid);
-        if (process == null)
-            return null;
+        List<OSProcess> processes = os.getProcesses();
 
-        return buildProcessTreeNode(process);
+        Map<Integer, ProcessTreeDTO> map = new HashMap<>();
+
+        for (OSProcess process : processes) {
+            ProcessTreeDTO dto = buildProcessTreeNode(process);
+            map.put(dto.getPid(), dto);
+        }
+
+        for (ProcessTreeDTO process : map.values()) {
+            if (map.containsKey(process.getParentId())) {
+                map.get(process.getParentId())
+                        .getChildren()
+                        .add(process);
+            }
+        }
+
+        ProcessTreeDTO root = map.get(pid);
+
+        if (root != null) {
+            aggregateUsage(root);
+        }
+        return root;
     }
 
     @Override
@@ -196,6 +215,11 @@ public class OshiProcessMonitor implements ProcessMonitor {
 
         memoryPercent = Math.round(memoryPercent * 100.0) / 100.0;
 
+        long memoryBytes = process.getResidentSetSize();
+        long virtualBytes = process.getVirtualSize();
+        long starttime = process.getStartTime();
+        long uptime = process.getUpTime();
+
         return ProcessTreeDTO.builder()
                 .pid(process.getProcessID())
                 .parentId(process.getParentProcessID())
@@ -207,12 +231,16 @@ public class OshiProcessMonitor implements ProcessMonitor {
                 .state(process.getState().name())
                 .priority(process.getPriority())
                 .cpuLoad(roundedCpu)
-                .memory(process.getResidentSetSize())
-                .virtualMemory(process.getVirtualSize())
+                .memory(memoryBytes)
+                .FMemory(formatBytes(memoryBytes))
+                .virtualMemory(virtualBytes)
+                .FVirtualMemory(formatBytes(virtualBytes))
                 .memoryPercent(memoryPercent)
                 .threads(process.getThreadCount())
-                .starttime(process.getStartTime())
-                .uptime(process.getUpTime())
+                .starttime(starttime)
+                .FStarttime(formatTimestamp(starttime))
+                .uptime(uptime)
+                .FUptime(formatDuration(uptime))
                 .bitness(process.getBitness())
                 .children(new ArrayList<>())
                 .build();
@@ -223,7 +251,54 @@ public class OshiProcessMonitor implements ProcessMonitor {
             aggregateUsage(child);
             node.setCpuLoad(node.getCpuLoad() + child.getCpuLoad());
             node.setMemory(node.getMemory() + child.getMemory());
+            node.setVirtualMemory(node.getVirtualMemory() + child.getVirtualMemory());
         }
+        node.setCpuLoad(Math.round(node.getCpuLoad() * 100.0) / 100.0);
+        long totalMemory = systemInfo.getHardware().getMemory().getTotal();
+        double percent = (node.getMemory() * 100.0) / totalMemory;
+        node.setMemoryPercent(Math.round(percent * 100.0) / 100.0);
+        node.setFMemory(formatBytes(node.getMemory()));
+        node.setFVirtualMemory(formatBytes(node.getVirtualMemory()));
+    }
+
+    private String formatBytes(long bytes) {
+
+        if (bytes <= 0)
+            return "0 MB";
+
+        double gb = bytes / (1024.0 * 1024 * 1024);
+        double mb = bytes / (1024.0 * 1024);
+        double kb = bytes / 1024.0;
+
+        if (gb >= 1)
+            return String.format("%.2f GB", gb);
+
+        if (mb >= 1)
+            return String.format("%.2f MB", mb);
+
+        return String.format("%.2f KB", kb);
+    }
+
+    private String formatDuration(long millis) {
+
+        long totalSeconds = millis / 1000;
+
+        long days = totalSeconds / 86400;
+        long hours = (totalSeconds % 86400) / 3600;
+        long minutes = (totalSeconds % 3600) / 60;
+        long seconds = totalSeconds % 60;
+
+        return String.format("%dd %02dh %02dm %02ds",
+                days, hours, minutes, seconds);
+    }
+
+    private String formatTimestamp(long epochMillis) {
+
+        java.time.LocalDateTime time = java.time.Instant.ofEpochMilli(epochMillis)
+                .atZone(java.time.ZoneId.systemDefault())
+                .toLocalDateTime();
+
+        return time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 
     @Override
@@ -295,27 +370,27 @@ public class OshiProcessMonitor implements ProcessMonitor {
     @Override
     public ProcessKillResponseDTO killProcess(int pid, boolean force) {
         try {
-            if(pid <= 0) {
+            if (pid <= 0) {
                 return buildResponse(pid, false, "Invalid PID");
             }
 
-            if(pid == 1 || pid == 4) {
+            if (pid == 1 || pid == 4) {
                 return buildResponse(pid, false, "Cannot kill system critical process");
             }
 
             int currentPid = (int) ProcessHandle.current().pid();
 
-            if(pid == currentPid) {
+            if (pid == currentPid) {
                 return buildResponse(pid, false, "Cannot kill current running process");
             }
 
             ProcessHandle handle = ProcessHandle.of(pid).orElse(null);
-            
-            if(handle == null || !handle.isAlive()) {
+
+            if (handle == null || !handle.isAlive()) {
                 return buildResponse(pid, false, "Process not found or already terminated");
             }
 
-            if(force) {
+            if (force) {
                 handle.destroyForcibly();
             } else {
                 handle.destroy();
@@ -323,12 +398,13 @@ public class OshiProcessMonitor implements ProcessMonitor {
 
             try {
                 handle.onExit().get(2, TimeUnit.SECONDS);
-            } catch(TimeoutException e) {} catch (Exception ex) { }
+            } catch (TimeoutException e) {
+            } catch (Exception ex) {
+            }
             boolean terminated = !handle.isAlive();
 
-            return terminated ? 
-                buildResponse(pid, true, "Process terminated successfully") 
-                : buildResponse(pid, false, "Process did not terminate");
+            return terminated ? buildResponse(pid, true, "Process terminated successfully")
+                    : buildResponse(pid, false, "Process did not terminate");
         } catch (Exception e) {
             return buildResponse(pid, false, "Error: " + e.getMessage());
         }
@@ -342,7 +418,7 @@ public class OshiProcessMonitor implements ProcessMonitor {
     public ProcessKillPreviewDTO previewKillTree(int pid) {
         ProcessHandle root = ProcessHandle.of(pid).orElse(null);
 
-        if(root == null || !root.isAlive()) {
+        if (root == null || !root.isAlive()) {
             return null;
         }
 
@@ -351,7 +427,7 @@ public class OshiProcessMonitor implements ProcessMonitor {
         pids.add(pid);
 
         root.descendants().forEach(ph -> pids.add((int) ph.pid()));
-        
+
         OSProcess process = os.getProcess(pid);
         String rootName = process != null ? process.getName() : root.info().command().orElse("Unknown");
         return ProcessKillPreviewDTO.builder()
@@ -365,29 +441,29 @@ public class OshiProcessMonitor implements ProcessMonitor {
     @Override
     public ProcessKillResponseDTO killProcessTree(int pid, boolean force) {
         try {
-            if(pid <= 0 || pid == 1 || pid == 4) {
+            if (pid <= 0 || pid == 1 || pid == 4) {
                 return buildResponse(pid, false, "Cannot Kill system critical process");
             }
             int currentPid = (int) ProcessHandle.current().pid();
-            if(pid == currentPid) {
+            if (pid == currentPid) {
                 return buildResponse(pid, false, "Cannot kill current process");
             }
 
             ProcessHandle root = ProcessHandle.of(pid).orElse(null);
 
-            if(root == null || !root.isAlive()) {
+            if (root == null || !root.isAlive()) {
                 return buildResponse(pid, false, "Process not found");
             }
 
             root.descendants().forEach(ph -> {
-                if(force) {
+                if (force) {
                     ph.destroyForcibly();
                 } else {
                     ph.destroy();
                 }
             });
 
-            if(force) {
+            if (force) {
                 root.destroyForcibly();
             } else {
                 root.destroy();
@@ -395,14 +471,15 @@ public class OshiProcessMonitor implements ProcessMonitor {
 
             try {
                 root.onExit().get(3, TimeUnit.SECONDS);
-            } catch (Exception ignored) { }
+            } catch (Exception ignored) {
+            }
 
             boolean terminated = !root.isAlive();
 
-            return terminated ? buildResponse(pid, true, "Process tree terminated successfully") 
-                : buildResponse(pid, false, "Process tree did not fully terminated");
+            return terminated ? buildResponse(pid, true, "Process tree terminated successfully")
+                    : buildResponse(pid, false, "Process tree did not fully terminated");
         } catch (Exception e) {
-            return buildResponse( pid, false, "Error: " + e.getMessage());
+            return buildResponse(pid, false, "Error: " + e.getMessage());
         }
     }
 }

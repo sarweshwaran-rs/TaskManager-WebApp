@@ -24,8 +24,8 @@ public class OshiNetworkMonitor implements NetworkMonitor {
     private final Map<String, Long> prevBytesRecv = new ConcurrentHashMap<>();
     private final Map<String, Long> prevTime = new ConcurrentHashMap<>();
 
-    public OshiNetworkMonitor() {
-        this.systemInfo = new SystemInfo();
+    public OshiNetworkMonitor(SystemInfo systemInfo) {
+        this.systemInfo = systemInfo;
     }
 
     @Override

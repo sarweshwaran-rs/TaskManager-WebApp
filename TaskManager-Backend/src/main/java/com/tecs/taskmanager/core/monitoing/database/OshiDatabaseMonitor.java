@@ -7,27 +7,20 @@ import org.springframework.stereotype.Component;
 import com.tecs.taskmanager.core.common.PortFinder;
 import com.tecs.taskmanager.dto.database.DBInfo;
 
-import oshi.SystemInfo;
 import oshi.software.os.OSProcess;
 import oshi.software.os.OperatingSystem;
 
 @Component
 public class OshiDatabaseMonitor implements DatabaseMonitor {
 
-    // 🔥 Removed pg_ctl (not actual DB server)
     private static final List<String> DB_NAMES = Arrays.asList(
-            "mysqld",
-            "postgres",
-            "mongod",
-            "oracle",
-            "sqlservr");
+            "mysqld", "postgres", "mongod", "oracle", "sqlservr");
 
     private final OperatingSystem os;
     private final PortFinder portFinder;
 
-    public OshiDatabaseMonitor(PortFinder portFinder) {
-        SystemInfo systemInfo = new SystemInfo();
-        this.os = systemInfo.getOperatingSystem();
+    public OshiDatabaseMonitor(OperatingSystem os, PortFinder portFinder) {
+        this.os = os;
         this.portFinder = portFinder;
     }
 

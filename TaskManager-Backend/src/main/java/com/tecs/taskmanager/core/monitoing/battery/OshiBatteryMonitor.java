@@ -13,8 +13,8 @@ import oshi.hardware.PowerSource;
 public class OshiBatteryMonitor implements BatteryMonitor {
     private final SystemInfo systemInfo;
 
-    public OshiBatteryMonitor() {
-        this.systemInfo = new SystemInfo();
+    public OshiBatteryMonitor(SystemInfo systemInfo) {
+        this.systemInfo = systemInfo;
     }
 
     @Override

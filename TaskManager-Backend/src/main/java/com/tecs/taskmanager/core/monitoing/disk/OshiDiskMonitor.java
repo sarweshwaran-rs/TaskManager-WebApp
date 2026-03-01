@@ -12,6 +12,7 @@ import com.tecs.taskmanager.dto.disk.PartitionDTO;
 
 import oshi.SystemInfo;
 import oshi.hardware.HWDiskStore;
+import oshi.software.os.OSFileStore;
 
 @Component
 public class OshiDiskMonitor implements DiskMonitor {
@@ -21,13 +22,14 @@ public class OshiDiskMonitor implements DiskMonitor {
     private final Map<String, Long> prevWrite = new ConcurrentHashMap<>();
     private final Map<String, Long> prevTime = new ConcurrentHashMap<>();
 
-    public OshiDiskMonitor() {
-        this.systemInfo = new SystemInfo();
+    public OshiDiskMonitor(SystemInfo systemInfo) {
+        this.systemInfo = systemInfo;
     }
 
     @Override
     public List<DiskInfoDTO> getDiskInfo() {
         List<HWDiskStore> disks = systemInfo.getHardware().getDiskStores();
+        List<OSFileStore> fileStores = systemInfo.getOperatingSystem().getFileSystem().getFileStores();
 
         return disks.stream().map(disk -> {
             disk.updateAttributes();
@@ -35,15 +37,47 @@ public class OshiDiskMonitor implements DiskMonitor {
             String name = disk.getName();
             String model = disk.getModel();
             String serial = disk.getSerial();
-            String size = String.format("%.1f GB", disk.getSize() / (1024.0 * 1024.0 * 1024.0));
+            String size = String.format("%.1f GB",
+                    disk.getSize() / (1024.0 * 1024.0 * 1024.0));
 
             List<PartitionDTO> partitions = disk.getPartitions().stream()
-                    .map(p -> new PartitionDTO(
-                            p.getIdentification(),
-                            p.getType(),
-                            p.getUuid(),
-                            (p.getSize() / (1024.0 * 1024.0 * 1024.0)) + " GB",
-                            p.getMountPoint()))
+                    .map(partition -> {
+
+                        OSFileStore matchedFs = fileStores.stream()
+                                .filter(fs -> fs.getMount()
+                                        .equalsIgnoreCase(partition.getMountPoint()))
+                                .findFirst()
+                                .orElse(null);
+
+                        double totalGB = 0;
+                        double usedGB = 0;
+                        double usagePercent = 0;
+
+                        if (matchedFs != null) {
+
+                            long total = matchedFs.getTotalSpace();
+                            long usable = matchedFs.getUsableSpace();
+                            long used = total - usable;
+
+                            totalGB = round(total / (1024.0 * 1024.0 * 1024.0));
+                            usedGB = round(used / (1024.0 * 1024.0 * 1024.0));
+
+                            if (totalGB > 0) {
+                                usagePercent = round((usedGB * 100.0) / totalGB);
+                            }
+                        }
+
+                        return new PartitionDTO(
+                                partition.getIdentification(),
+                                partition.getType(),
+                                partition.getUuid(),
+                                String.format("%.2f GB",
+                                        partition.getSize() / (1024.0 * 1024.0 * 1024.0)),
+                                partition.getMountPoint(),
+                                totalGB,
+                                usedGB,
+                                usagePercent);
+                    })
                     .collect(Collectors.toList());
 
             long now = System.currentTimeMillis();
@@ -58,15 +92,17 @@ public class OshiDiskMonitor implements DiskMonitor {
             long elapsed = now - prevT;
             double seconds = elapsed / 1000.0;
 
-            double readSpeedKBs = seconds > 0 ? (currR - prevR) / 1024.0 / seconds : 0;
-            double writeSpeedKBs = seconds > 0 ? (currW - prevW) / 1024.0 / seconds : 0;
+            double readSpeedKBs = seconds > 0
+                    ? (currR - prevR) / 1024.0 / seconds
+                    : 0;
+
+            double writeSpeedKBs = seconds > 0
+                    ? (currW - prevW) / 1024.0 / seconds
+                    : 0;
 
             prevRead.put(name, currR);
             prevWrite.put(name, currW);
             prevTime.put(name, now);
-
-            String readSpeed = formatSpeed(readSpeedKBs);
-            String writeSpeed = formatSpeed(writeSpeedKBs);
 
             return DiskInfoDTO.builder()
                     .name(name)
@@ -74,8 +110,8 @@ public class OshiDiskMonitor implements DiskMonitor {
                     .serial(serial)
                     .size(size)
                     .partitions(partitions)
-                    .readSpeed(readSpeed)
-                    .writeSpeed(writeSpeed)
+                    .readSpeed(formatSpeed(readSpeedKBs))
+                    .writeSpeed(formatSpeed(writeSpeedKBs))
                     .build();
         }).collect(Collectors.toList());
     }
@@ -86,5 +122,9 @@ public class OshiDiskMonitor implements DiskMonitor {
         } else {
             return String.format("%.2f KB/s", speedKBs);
         }
+    }
+
+    private double round(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 }

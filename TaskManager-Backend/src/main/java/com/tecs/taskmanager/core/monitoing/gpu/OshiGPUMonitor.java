@@ -14,8 +14,8 @@ import oshi.hardware.GraphicsCard;
 public class OshiGPUMonitor implements GPUMonitor {
     private final SystemInfo systemInfo;
 
-    public OshiGPUMonitor() {
-        this.systemInfo = new SystemInfo();
+    public OshiGPUMonitor(SystemInfo systemInfo) {
+        this.systemInfo = systemInfo;
     }
 
     @Override
