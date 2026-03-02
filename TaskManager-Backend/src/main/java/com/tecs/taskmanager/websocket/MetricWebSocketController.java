@@ -21,7 +21,7 @@ public class MetricWebSocketController {
     @Scheduled(fixedRate = 1000)
     public void publishMetrics() {
 
-        SystemSnapshotDTO snapshot = snapshotService.getSnapshot();
+        SystemSnapshotDTO snapshot = snapshotService.buildSnapshot();
 
         if (snapshot != null) {
             messagingTemplate.convertAndSend("/topic/metrics", snapshot);
