@@ -58,6 +58,7 @@ public class SystemSnapshotService {
                 cpuMonitor.getCpuInfo(),
                 memoryMonitor.getMemoryInfo(),
                 osMonitor.getOSInfo(),
+                osMonitor.getComputerInfo(),
                 processes,
                 processTree,
                 batteryMonitor.getBatteryInfo(),

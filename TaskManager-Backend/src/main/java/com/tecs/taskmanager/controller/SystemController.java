@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+
 @RestController
 @RequestMapping("/api")
 public class SystemController {
@@ -41,5 +42,19 @@ public class SystemController {
     @GetMapping("/sprocesses")
     public ResponseEntity<?> getProcesses() {
         return ResponseEntity.ok(cacheService.getSnapshot().getProcesses());
+    }
+    @GetMapping("/gpus")
+    public ResponseEntity<?> getGPU() {
+        return ResponseEntity.ok(cacheService.getSnapshot().getGpus());
+    }
+
+    @GetMapping("/os")
+    public ResponseEntity<?> getOS() {
+        return ResponseEntity.ok(cacheService.getSnapshot().getOs());
+    }
+
+    @GetMapping("/computet-info")
+    public ResponseEntity<?> getCI() {
+        return ResponseEntity.ok(cacheService.getSnapshot().getComputerInfo());
     }
 }
