@@ -74,22 +74,9 @@ public class OshiCPUMonitor implements CPUMonitor {
                                 .threads(totalThreads)
                                 .handles(totalHandles > 0 ? totalHandles : null)
                                 .interrupts(processor.getInterrupts())
-                                .temperature(
-                                                sensors.getCpuTemperature() > 0
-                                                                ? String.format("%.1f °C",
-                                                                                sensors.getCpuTemperature())
-                                                                : "N/A")
-                                .voltage(
-                                                sensors.getCpuVoltage() > 0
-                                                                ? String.format("%.2f V",
-                                                                                sensors.getCpuVoltage())
-                                                                : "N/A")
-                                .frequency(
-                                                processor.getMaxFreq() > 0
-                                                                ? String.format("%.2f GHz",
-                                                                                processor.getMaxFreq()
-                                                                                                / 1_000_000_000.0)
-                                                                : "N/A")
+                                .temperature("N/A")
+                                .voltage("N/A")
+                                .frequency(processor.getMaxFreq() > 0 ? String.format("%.2f GHz",processor.getMaxFreq() / 1_000_000_000.0) : "N/A")
                                 .uptime(uptime)
                                 .name(processor.getProcessorIdentifier().getName())
                                 .vendor(processor.getProcessorIdentifier().getVendor())
@@ -97,7 +84,7 @@ public class OshiCPUMonitor implements CPUMonitor {
                                 .logicalCores(processor.getLogicalProcessorCount())
                                 .processorId(processor.getProcessorIdentifier().getProcessorID())
                                 .processorFamily(processor.getProcessorIdentifier().getFamily())
-                                .processorModel(processor.getProcessorIdentifier().getModel()) // ✅ FIXED
+                                .processorModel(processor.getProcessorIdentifier().getModel())
                                 .microarchitecture(processor.getProcessorIdentifier().getMicroarchitecture())
                                 .vendorFrequency(processor.getProcessorIdentifier().getVendorFreq())
                                 .build();
@@ -108,7 +95,6 @@ public class OshiCPUMonitor implements CPUMonitor {
                 long hours = (seconds % (24 * 3600)) / 3600;
                 long minutes = (seconds % 3600) / 60;
                 long sec = seconds % 60;
-                return String.format("%d:%02d:%02d:%02d",
-                                days, hours, minutes, sec);
+                return String.format("%d:%02d:%02d:%02d", days, hours, minutes, sec);
         }
 }

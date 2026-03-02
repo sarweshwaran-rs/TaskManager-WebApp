@@ -101,7 +101,7 @@ public class OshiProcessMonitor implements ProcessMonitor {
     @Override
     public List<ProcessInfoDTO> getAllProcesses() {
         List<OSProcess> processes = os.getProcesses();
-        Map<Integer, OSProcess> currentSnapshot = new HashMap<>();
+        Map<Integer, OSProcess> currentSnapshot = new ConcurrentHashMap<>();
 
         List<ProcessInfoDTO> processList = processes.stream()
                 .filter(p -> p.getProcessID() != 0)
