@@ -1,11 +1,12 @@
 package com.tecs.taskmanager.health;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.tecs.taskmanager.core.snapshot.SystemSnapshotService;
+import com.tecs.taskmanager.core.snapshot.SnapshotCacheService;
 import com.tecs.taskmanager.dto.battery.BatteryInfoDTO;
 import com.tecs.taskmanager.dto.disk.DiskInfoDTO;
 import com.tecs.taskmanager.dto.disk.PartitionDTO;
@@ -15,87 +16,32 @@ import com.tecs.taskmanager.dto.snapshot.SystemSnapshotDTO;
 
 @Service
 public class HealthService {
-    private final SystemSnapshotService snapshotService;
 
-    public HealthService(SystemSnapshotService snapshotService) {
-        this.snapshotService = snapshotService;
+    private final SnapshotCacheService cacheService;
+
+    public HealthService(SnapshotCacheService cacheService) {
+        this.cacheService = cacheService;
     }
 
     public SystemHealthDTO evaluateHealth() {
-        SystemSnapshotDTO snapshot = snapshotService.getSnapshot();
+
+        SystemSnapshotDTO snapshot = cacheService.getSnapshot();
+
+        if (snapshot == null) {
+            return SystemHealthDTO.builder()
+                .overallStatus(HealthStatus.CRITICAL)
+                .components(Collections.emptyList())
+                .build();
+        }
+
         List<ComponentHealthDTO> components = new ArrayList<>();
 
-        double cpu = round(snapshot.getCpu().getSystemLoad());
-        components.add(evaluate("CPU", cpu, 70, 90));
-
-        double memory = round(snapshot.getMemory().getUsagePercent());
-        components.add(evaluate("Memory", memory, 75, 90));
-
-        if (snapshot.getDisks() != null) {
-
-            for (DiskInfoDTO disk : snapshot.getDisks()) {
-
-                if (disk.getPartitions() == null) continue;
-
-                for (PartitionDTO partition : disk.getPartitions()) {
-
-                    double usage = round(partition.getUsagePercent());
-
-                    HealthStatus status;
-
-                    if (usage > 90) {
-                        status = HealthStatus.CRITICAL;
-                    } else if (usage > 75) {
-                        status = HealthStatus.WARNING;
-                    } else {
-                        status = HealthStatus.UP;
-                    }
-
-                    String mount = partition.getMountPoint()
-                            .replace("\\", "")
-                            .trim();
-
-                    components.add(ComponentHealthDTO.builder()
-                            .component("Disk (" + mount + ")")
-                            .healthStatus(status)
-                            .message(String.format(
-                                    "%s usage: %.2f%% (Used: %.2f GB / %.2f GB)",
-                                    mount,
-                                    usage,
-                                    partition.getUsedGB(),
-                                    partition.getTotalGB()))
-                            .build());
-                }
-            }
-        }
-
-        boolean networkUp = snapshot.getNetworks() != null && !snapshot.getNetworks().isEmpty();
-
-        components.add(ComponentHealthDTO.builder()
-                .component("Network")
-                .healthStatus(networkUp ? HealthStatus.UP : HealthStatus.WARNING)
-                .message(networkUp
-                        ? "Network Active"
-                        : "No active network interface")
-                .build());
-
+        evaluateCpu(snapshot, components);
+        evaluateMemory(snapshot, components);
+        evaluateDisks(snapshot, components);
+        evaluateNetwork(snapshot, components);
         evaluateBattery(snapshot, components);
-
-        if (snapshot.getDatabases() == null
-                || snapshot.getDatabases().isEmpty()) {
-
-            components.add(ComponentHealthDTO.builder()
-                    .component("Database")
-                    .healthStatus(HealthStatus.CRITICAL)
-                    .message("No database detected")
-                    .build());
-        } else {
-            components.add(ComponentHealthDTO.builder()
-                    .component("Database")
-                    .healthStatus(HealthStatus.UP)
-                    .message("Databases running")
-                    .build());
-        }
+        evaluateDatabase(snapshot, components);
 
         HealthStatus overall = calculateOverall(components);
 
@@ -103,6 +49,68 @@ public class HealthService {
                 .overallStatus(overall)
                 .components(components)
                 .build();
+    }
+
+    private void evaluateCpu(SystemSnapshotDTO snapshot, List<ComponentHealthDTO> components) {
+
+        if (snapshot.getCpu() == null)
+            return;
+
+        double cpuLoad = round(snapshot.getCpu().getSystemLoad());
+        components.add(evaluate("CPU", cpuLoad, 70, 90));
+    }
+
+    private void evaluateMemory(SystemSnapshotDTO snapshot, List<ComponentHealthDTO> components) {
+
+        if (snapshot.getMemory() == null)
+            return;
+
+        double memoryUsage = round(snapshot.getMemory().getUsagePercent());
+        components.add(evaluate("Memory", memoryUsage, 75, 90));
+    }
+
+    private void evaluateDisks(SystemSnapshotDTO snapshot, List<ComponentHealthDTO> components) {
+
+        if (snapshot.getDisks() == null)
+            return;
+
+        for (DiskInfoDTO disk : snapshot.getDisks()) {
+
+            if (disk.getPartitions() == null)
+                continue;
+
+            for (PartitionDTO partition : disk.getPartitions()) {
+
+                double usage = round(partition.getUsagePercent());
+
+                HealthStatus status = usage > 90 ? HealthStatus.CRITICAL
+                        : usage > 75 ? HealthStatus.WARNING : HealthStatus.UP;
+
+                String mount = partition.getMountPoint() == null ? "Unknown" : partition.getMountPoint().replace("\\", "").trim();
+
+                components.add(ComponentHealthDTO.builder()
+                        .component("Disk (" + mount + ")")
+                        .healthStatus(status)
+                        .message(String.format(
+                                "%s usage: %.2f%% (Used: %.2f GB / %.2f GB)",
+                                mount,
+                                usage,
+                                partition.getUsedGB(),
+                                partition.getTotalGB()))
+                        .build());
+            }
+        }
+    }
+
+    private void evaluateNetwork(SystemSnapshotDTO snapshot, List<ComponentHealthDTO> components) {
+
+        boolean networkUp = snapshot.getNetworks() != null && !snapshot.getNetworks().isEmpty();
+
+        components.add(ComponentHealthDTO.builder()
+                .component("Network")
+                .healthStatus(networkUp ? HealthStatus.UP : HealthStatus.WARNING)
+                .message(networkUp ? "Network Active" : "No active network interface")
+                .build());
     }
 
     private void evaluateBattery(SystemSnapshotDTO snapshot, List<ComponentHealthDTO> components) {
@@ -126,8 +134,18 @@ public class HealthService {
         }
     }
 
-    private ComponentHealthDTO evaluate(String component, double value, double warningThreshold, double criticalThreshold) {
+    private void evaluateDatabase(SystemSnapshotDTO snapshot, List<ComponentHealthDTO> components) {
+        
+        boolean dbUp = snapshot.getDatabases() != null && !snapshot.getDatabases().isEmpty();
 
+        components.add(ComponentHealthDTO.builder()
+                .component("Database")
+                .healthStatus(dbUp ? HealthStatus.UP : HealthStatus.CRITICAL)
+                .message(dbUp ? "Databases running" : "No database detected")
+                .build());
+    }
+
+    private ComponentHealthDTO evaluate(String component, double value, double warningThreshold, double criticalThreshold) {
         if (value > criticalThreshold) {
             return build(component, HealthStatus.CRITICAL, component + " usage critical: " + value + "%");
         }
@@ -148,7 +166,7 @@ public class HealthService {
     }
 
     private HealthStatus calculateOverall(List<ComponentHealthDTO> components) {
-
+        
         if (components.stream()
                 .anyMatch(c -> c.getHealthStatus() == HealthStatus.CRITICAL)) {
             return HealthStatus.CRITICAL;
