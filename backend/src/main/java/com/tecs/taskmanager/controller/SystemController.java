@@ -53,7 +53,7 @@ public class SystemController {
         return ResponseEntity.ok(cacheService.getSnapshot().getOs());
     }
 
-    @GetMapping("/computet-info")
+    @GetMapping("/computer-info")
     public ResponseEntity<?> getCI() {
         return ResponseEntity.ok(cacheService.getSnapshot().getComputerInfo());
     }
