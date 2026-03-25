@@ -16,6 +16,7 @@ import oshi.software.os.OperatingSystem;
 public class OshiCPUMonitor implements CPUMonitor {
 
         private final CentralProcessor processor;
+        @SuppressWarnings("unused")
         private final Sensors sensors;
         private final OperatingSystem os;
 
