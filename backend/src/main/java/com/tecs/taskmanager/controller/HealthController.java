@@ -1,10 +1,11 @@
 package com.tecs.taskmanager.controller;
 
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
+import com.tecs.taskmanager.dto.common.ApiResponse;
 import com.tecs.taskmanager.dto.health.SystemHealthDTO;
 import com.tecs.taskmanager.health.HealthService;
-import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
 public class HealthController {
@@ -16,7 +17,13 @@ public class HealthController {
     }
 
     @GetMapping("/api/health")
-    public SystemHealthDTO getHealth() {
-        return healthService.evaluateHealth();
+    public ResponseEntity<ApiResponse<SystemHealthDTO>> getHealth() {
+        SystemHealthDTO health = healthService.evaluateHealth();
+
+        if (health == null) {
+            throw new RuntimeException("Health data not available");
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(health));
     }
 }

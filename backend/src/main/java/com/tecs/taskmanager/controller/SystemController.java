@@ -1,16 +1,16 @@
 package com.tecs.taskmanager.controller;
 
-import com.tecs.taskmanager.core.snapshot.SnapshotCacheService;
-import com.tecs.taskmanager.dto.snapshot.SystemSnapshotDTO;
-
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.*;
+
+import com.tecs.taskmanager.core.snapshot.SnapshotCacheService;
+import com.tecs.taskmanager.dto.common.ApiResponse;
+import com.tecs.taskmanager.dto.snapshot.SystemSnapshotDTO;
 
 @RestController
 @RequestMapping("/api")
 public class SystemController {
+
     private final SnapshotCacheService cacheService;
 
     public SystemController(SnapshotCacheService cacheService) {
@@ -18,43 +18,60 @@ public class SystemController {
         this.cacheService = cacheService;
     }
 
-    @GetMapping("/snapshot")
-    public ResponseEntity<SystemSnapshotDTO> getSnapshot() {
+    private SystemSnapshotDTO getSnapshotSafe() {
         SystemSnapshotDTO snapshot = cacheService.getSnapshot();
-        return ResponseEntity.ok(snapshot);
+        if (snapshot == null) {
+            throw new RuntimeException("System snapshot not available");
+        }
+        return snapshot;
+    }
+
+    @GetMapping("/snapshot")
+    public ResponseEntity<ApiResponse<SystemSnapshotDTO>> getSnapshot() {
+        return ResponseEntity.ok(
+                ApiResponse.success(getSnapshotSafe())
+        );
     }
 
     @GetMapping("/cpu")
-    public ResponseEntity<?> getCpu() {
-        return ResponseEntity.ok(cacheService.getSnapshot().getCpu());
+    public ResponseEntity<ApiResponse<?>> getCpu() {
+        return ResponseEntity.ok(
+                ApiResponse.success(getSnapshotSafe().getCpu())
+        );
     }
 
     @GetMapping("/memory")
-    public ResponseEntity<?> getMemory() {
-        return ResponseEntity.ok(cacheService.getSnapshot().getMemory());
+    public ResponseEntity<ApiResponse<?>> getMemory() {
+        return ResponseEntity.ok(
+                ApiResponse.success(getSnapshotSafe().getMemory())
+        );
     }
 
     @GetMapping("/disks")
-    public ResponseEntity<?> getDisks() {
-        return ResponseEntity.ok(cacheService.getSnapshot().getDisks());
+    public ResponseEntity<ApiResponse<?>> getDisks() {
+        return ResponseEntity.ok(
+                ApiResponse.success(getSnapshotSafe().getDisks())
+        );
     }
 
-    @GetMapping("/sprocesses")
-    public ResponseEntity<?> getProcesses() {
-        return ResponseEntity.ok(cacheService.getSnapshot().getProcesses());
-    }
     @GetMapping("/gpus")
-    public ResponseEntity<?> getGPU() {
-        return ResponseEntity.ok(cacheService.getSnapshot().getGpus());
+    public ResponseEntity<ApiResponse<?>> getGPU() {
+        return ResponseEntity.ok(
+                ApiResponse.success(getSnapshotSafe().getGpus())
+        );
     }
 
     @GetMapping("/os")
-    public ResponseEntity<?> getOS() {
-        return ResponseEntity.ok(cacheService.getSnapshot().getOs());
+    public ResponseEntity<ApiResponse<?>> getOS() {
+        return ResponseEntity.ok(
+                ApiResponse.success(getSnapshotSafe().getOs())
+        );
     }
 
     @GetMapping("/computer-info")
-    public ResponseEntity<?> getCI() {
-        return ResponseEntity.ok(cacheService.getSnapshot().getComputerInfo());
+    public ResponseEntity<ApiResponse<?>> getCI() {
+        return ResponseEntity.ok(
+                ApiResponse.success(getSnapshotSafe().getComputerInfo())
+        );
     }
 }
